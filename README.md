@@ -1,10 +1,10 @@
-# Kubernetes Development Environment
+# calico
 
 ## Up and Running
 
 The following instructions have been wrapped and provided in `quickstart.sh`.
 It was developed and tested on macOS using hyperkit. It requires Internet
-connectivity, and requires just under eight minutes to complete on a 500Mbps
+connectivity, and requires just under ten minutes to complete on a 500Mbps
 connection. Hyperkit uses 30GiB of RAM for the default configuration.
 
 The code requires the following utilities to operate correctly. They are
@@ -25,6 +25,11 @@ Open browser to: http://10.109.73.206:30875
 [2022-03-23 16:54:04,461] jcmmini1.local/INFO/locust.main: Starting web interface at http://0.0.0.0:8089 (accepting connections from all network interfaces)
 [2022-03-23 16:54:04,475] jcmmini1.local/INFO/locust.main: Starting Locust 2.8.4
 ```
+
+Please note, `quickstart.sh` does not enable eBPF or install Keda and configure
+HPA with Prometheus metrics. It does, however, create a three node cluster;
+install Calico, Rancher, and the monitoring stack; configure the relevant
+Prometheus metrics and Grafana dashboards; and install Boutique.
 
 ## Demonstration of Calico CNI with eBPF the hard way 
 
@@ -77,8 +82,22 @@ Calico.
 ```
 sh monitoring/configure_prometheus.sh
 ...
-kubectl apply -f monitoring/calico-grafana-dashboards.yaml
+sh monitoring/configure_grafana_dashboards.sh
+...
 ```
+
+## Enable Horizontal Pod Autoscaling
+* https://www.nginx.com/blog/microservices-march-reduce-kubernetes-latency-with-autoscaling/
+
+This can be done at any time and is simply a demonstration of using Keda to
+scale workloads using Prometheus metrics.
+
+```
+sh hpa/configure_hpa.sh
+```
+
+The script above creates an ingress for http://boutique.test which becomes
+available after the script runs successfully.
 
 ## Load Testing with Locust
 * https://cloud.google.com/service-mesh/docs/onlineboutique-install-kpt

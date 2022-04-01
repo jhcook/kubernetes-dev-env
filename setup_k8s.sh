@@ -7,12 +7,14 @@
 #
 # Author: Justin Cook
 
-minikube --addons ingress,ingress-dns,metrics-server \
+minikube --addons ingress,ingress-dns,metrics-server,registry \
+         --insecure-registry "10.0.0.0/24" \
          --network-plugin=cni \
          --extra-config=kubeadm.pod-network-cidr=172.16.0.0/20 \
-         --memory=8g \
-         --kubernetes-version=v1.21.7 \
+         --memory=6g \
+         --kubernetes-version=v1.23.4 \
          --nodes=3 \
+         --insecure-registry="ghcr.io" \
          -p calico \
          start
 

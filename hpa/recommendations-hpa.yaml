@@ -1,0 +1,25 @@
+---
+# https://kubernetes.github.io/ingress-nginx/user-guide/monitoring/
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: recommendationservice-hpa
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: recommendationservice
+  minReplicas: 1
+  maxReplicas: 10
+  metrics:
+  - type: Object
+    object:
+      metric:
+        name: rate(nginx_ingress_controller_nginx_process_requests_total[5m])
+      describedObject:
+        apiVersion: networking.k8s.io/v1
+        kind: Ingress
+        name: frontend-ingress
+      target:
+        type: Value
+        value: "25"

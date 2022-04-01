@@ -11,24 +11,25 @@ kubectl apply -f https://github.com/jetstack/cert-manager/releases/download/v1.5
 
 # Add the appropriate Helm repos and update
 helm repo add jetstack https://charts.jetstack.io
-helm repo add rancher-stable https://releases.rancher.com/server-charts/stable
+helm repo add rancher-latest https://releases.rancher.com/server-charts/latest
 helm repo update
 
 # Install cert-manager
-helm install cert-manager jetstack/cert-manager \
+helm upgrade --install cert-manager jetstack/cert-manager \
   --namespace cert-manager \
   --create-namespace \
-  --version v1.5.1
+  --version v1.7.1
 
 # Create the cattle-system namespace
 kubectl create namespace cattle-system --dry-run=client -o yaml | \
   kubectl apply -f -
 
 # Install Rancher
-helm install rancher rancher-stable/rancher \
+helm upgrade --install rancher rancher-latest/rancher \
   --namespace cattle-system \
   --set hostname=rancher.test \
-  --set bootstrapPassword=admin
+  --set bootstrapPassword=admin \
+  --version 2.6.4
 
 # Wait for Rancher to become available
 kubectl rollout status deploy/rancher -n cattle-system

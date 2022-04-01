@@ -1,0 +1,7 @@
+FROM registry.access.redhat.com/ubi8/ubi
+
+RUN dnf install -y conntrack-tools python39 && dnf clean all
+COPY tcp_exporter.py /
+
+ENTRYPOINT ["python3", "/tcp_exporter.py"]
+CMD ["9100", "8080"]

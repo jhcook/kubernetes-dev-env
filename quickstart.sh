@@ -16,10 +16,10 @@ sh install_calico.sh
 # Install Rancher
 sh install_rancher.sh
 
-# Install and configure monitoring
+# Install and configure Prometheus metrics / Grafana dashboards
 sh install_monitoring.sh
 sh monitoring/configure_prometheus.sh
-kubectl apply -f monitoring/calico-grafana-dashboards.yaml
+sh monitoring/configure_grafana_dashboards.sh
 
 # Install boutique
 sh install_boutique.sh
