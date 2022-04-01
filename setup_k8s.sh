@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 #
-# Setup a single-node Kubernetes cluster with ingress, ingress-dns, and
+# Setup a three-node Kubernetes cluster with ingress, ingress-dns, and
 # metrics-server with CNI plugin. Configure the pod network as 172.16.0.0/20.
-# Use Kubernetes v1.21.7 as that is latest supported by Rancher. Finally, set
+# Use Kubernetes v1.23.4 as that is latest supported by Rancher. Finally, set
 # resolver to forward .test DNS queries to this cluster.
 #
 # Author: Justin Cook
