@@ -55,10 +55,10 @@ kubectl apply -f https://docs.tigera.io/manifests/custom-resources.yaml
 printf "Waiting on APIServer: "
 while :
 do
-  status="$(kubectl get tigerastatus apiserver --no-headers | awk '{print$2}')"
+  status="$(kubectl get tigerastatus apiserver --no-headers 2>&1 | awk '{print$2}')"
   if [ "${status}" == "True" ]
   then
-    printf "Found\n"
+    printf "Available\n"
     break
   fi
   sleep 2
@@ -68,11 +68,11 @@ done
 kubectl apply -f calico_enterprise/calico-enterprise-license.yaml
 
 # Wait for all components to become available
+printf "Waiting on all components: "
 while :
 do
   for condition in $(kubectl get tigerastatus --no-headers | sort -rk2 | awk '{print$2}')
   do
-    echo "$condition"
     if [ "${condition}" == "False" ]
     then
       sleep 2
@@ -84,6 +84,8 @@ do
     fi
   done
 done
+
+printf "Available\n"
 
 # Secure Calico Enterprise components with network policy
 kubectl apply -f https://docs.tigera.io/manifests/tigera-policies.yaml
