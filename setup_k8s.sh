@@ -11,7 +11,7 @@ minikube --addons ingress,ingress-dns,metrics-server,registry \
          --insecure-registry "10.0.0.0/24" \
          --network-plugin=cni \
          --extra-config=kubeadm.pod-network-cidr=172.16.0.0/20 \
-         --memory=6g \
+         --memory=8g \
          --kubernetes-version=v1.23.4 \
          --nodes=3 \
          --insecure-registry="ghcr.io" \
