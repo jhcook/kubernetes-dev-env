@@ -70,15 +70,16 @@ kubectl apply -f calico_enterprise/calico-enterprise-license.yaml
 # Wait for all components to become available
 while :
 do
-  for line in $(kubectl get tigerastatus --no-headers | sort -rk2)
+  for condition in $(kubectl get tigerastatus --no-headers | sort -rk2 | awk '{print$2}')
   do
-    condition="$(echo \""${line}"\" | awk '{print$2}')"
+    echo "$condition"
     if [ "${condition}" == "False" ]
     then
       sleep 2
       break
     elif [ "${condition}" == "" ]
     then
+      sleep 2
       break 2
     fi
   done
