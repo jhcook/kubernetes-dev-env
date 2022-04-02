@@ -15,6 +15,9 @@
 
 _NS_="tigera-operator"
 
+# Remove master taint
+kubectl taint nodes --all node-role.kubernetes.io/master-
+
 # Create persistent volumes
 for i in {1..5}
 do
@@ -70,17 +73,25 @@ kubectl create secret generic tigera-pull-secret \
 # Install Tigera custom resources
 kubectl apply -f https://docs.tigera.io/manifests/custom-resources.yaml
 
-# Wait until apiserver and calico are Available
+# Wait until apiserver and calico are Available. In order to circumvent
+# flapping, get three consecutive success to proceed.
 for serv in apiserver calico
 do
   printf "Waiting on %s: " "${serv}"
+  success_count=0
   while :
   do
     status="$(kubectl get tigerastatus ${serv} --no-headers 2>&1 | awk '{print$2}')"
     if [ "${status}" == "True" ]
     then
-      printf "Available\n"
-      break
+      ((success_count++))
+      if [ "$success_count" -gt 2 ]
+      then
+        printf "Available\n"
+        break
+      fi
+    else
+      success_count=0
     fi
     sleep 2
   done
@@ -111,3 +122,12 @@ printf "Available\n"
 
 # Secure Calico Enterprise components with network policy
 kubectl apply -f https://docs.tigera.io/manifests/tigera-policies.yaml
+
+# Create an admin user
+kubectl create sa admin -n default
+kubectl create clusterrolebinding admin-access --clusterrole tigera-network-admin --serviceaccount default:admin
+kubectl get secret "$(kubectl get serviceaccount admin -o jsonpath='{range .secrets[*]}{.name}{"\n"}{end}' | grep token)" -o go-template='{{.data.token | base64decode}}' && echo
+
+kubectl port-forward -n tigera-manager svc/tigera-manager 9443
+
+printf "Visit https://localhost:9443/ to login to the Calico Enterprise UI with token above.\n\n"
