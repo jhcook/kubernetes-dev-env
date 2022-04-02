@@ -83,23 +83,36 @@ do
   sleep 2
 done
 
+# Wait on calico to become Available
+printf "Waiting on Calico: "
+while :
+do
+  status="$(kubectl get tigerastatus calico --no-headers 2>&1 | awk '{print$2}')"
+  if [ "${status}" == "True" ]
+  then
+    printf "Available\n"
+    break
+  fi
+  sleep 2
+done
+
 # Install the Calico Enterprise license
 kubectl apply -f calico_enterprise/calico-enterprise-license.yaml
 
 # Wait for all components to become available
 printf "Waiting on all components: "
-while :
+AVAIL=False
+until ${AVAIL}
 do
   for condition in $(kubectl get tigerastatus --no-headers | sort -rk2 | awk '{print$2}')
   do
-    if [ "${condition}" == "False" ]
+    if [ "${condition}" != "True" ]
     then
       sleep 2
+      AVAIL=False
       break
-    elif [ "${condition}" == "" ]
-    then
-      sleep 2
-      break 2
+    else
+      AVAIL=True
     fi
   done
 done
