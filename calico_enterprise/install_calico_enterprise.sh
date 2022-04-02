@@ -10,6 +10,7 @@
 #  
 # References:
 #  * https://docs.tigera.io/getting-started/kubernetes/rancher
+#  * https://docs.tigera.io/maintenance/monitor/support
 #
 # Author: Justin Cook
 
@@ -56,19 +57,21 @@ kubectl get APIServer default -n "${_NS_}" >/dev/null 2>&1 && \
 kubectl delete APIServer default -n "${_NS_}"
 
 # Install the pull secret
-
-for secret in $(kubectl get secrets -n "${_NS_}" -o name)
-do
-  if [ "${secret#*/}" == "tigera-pull-secret" ]
-  then
-    kubectl delete secret tigera-pull-secret -n "${_NS_}"
-    break
-  fi
-done
-
 kubectl create secret generic tigera-pull-secret \
     --type=kubernetes.io/dockerconfigjson -n "${_NS_}" \
-    --from-file=.dockerconfigjson=calico_enterprise/tigera-pull-secret.json
+    --from-file=.dockerconfigjson=calico_enterprise/tigera-pull-secret.json \
+    --dry-run=client -o yaml | kubectl apply -f -
+
+# Create a pull secret for the Tigera Prometheus operator and patch deployment
+#kubectl create namespace tigera-prometheus --dry-run=client -o yaml | \
+#  kubectl apply -f -
+kubectl apply -f https://docs.tigera.io/manifests/tigera-prometheus-operator.yaml
+kubectl create secret generic tigera-pull-secret \
+    --type=kubernetes.io/dockerconfigjson -n tigera-prometheus \
+    --from-file=.dockerconfigjson=calico_enterprise/tigera-pull-secret.json \
+    --dry-run=client -o yaml | kubectl apply -f -
+kubectl patch deployment -n tigera-prometheus calico-prometheus-operator \
+    -p '{"spec":{"template":{"spec":{"imagePullSecrets":[{"name": "tigera-pull-secret"}]}}}}'
 
 # Install Tigera custom resources
 kubectl apply -f https://docs.tigera.io/manifests/custom-resources.yaml
