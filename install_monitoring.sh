@@ -2,6 +2,11 @@
 #
 # Install Prometheus, Grafana, and configure the monitoring stack
 #
+# Resources:
+#  * http://charts.rancher.io/index.yaml
+#  * https://github.com/rancher/charts/tree/release-v2.6/charts/rancher-monitoring-crd
+#  * https://github.com/rancher/charts/tree/release-v2.6/charts/rancher-monitoring
+#
 # Author: Justin Cook
 
 set -o errexit
@@ -15,20 +20,16 @@ helm repo update
 kubectl create namespace cattle-monitoring-system --dry-run=client -o yaml | \
   kubectl apply -f -
 
-# 2.6.4-rc12
-# helm upgrade --install=true --namespace=cattle-monitoring-system --timeout=10m0s --values=/home/shell/helm/values-rancher-monitoring-crd-100.1.1-up19.0.3.yaml --version=100.1.1+up19.0.3 --wait=true rancher-monitoring-crd /home/shell/helm/rancher-monitoring-crd-100.1.1-up19.0.3.tgz
-# helm upgrade --install=true --namespace=cattle-monitoring-system --timeout=10m0s --values=/home/shell/helm/values-rancher-monitoring-100.1.1-up19.0.3.yaml --version=100.1.1+up19.0.3 --wait=true rancher-monitoring /home/shell/helm/rancher-monitoring-100.1.1-up19.0.3.tgz
-
 # Install the required charts for rancher-monitoring which is just upstream
 # Prometheus and Grafana operators et al with a bit of configuration
 helm upgrade --install=true --namespace=cattle-monitoring-system --timeout=10m0s \
-  --values=https://raw.githubusercontent.com/rancher/charts/dev-v2.6/charts/rancher-monitoring/100.1.1%2Bup19.0.3/values.yaml \
-  --version=100.1.1+up19.0.3 --wait=true rancher-monitoring-crd \
-  http://charts.rancher.io/assets/rancher-monitoring-crd/rancher-monitoring-crd-100.1.0+up19.0.3.tgz
+  --values=https://raw.githubusercontent.com/rancher/charts/release-v2.6/charts/rancher-monitoring-crd/100.1.2%2Bup19.0.3/values.yaml \
+  --version=100.1.2+up19.0.3 --wait=true rancher-monitoring-crd \
+  http://charts.rancher.io/assets/rancher-monitoring-crd/rancher-monitoring-crd-100.1.2+up19.0.3.tgz
 helm upgrade --install=true --namespace=cattle-monitoring-system --timeout=10m0s \
-  --values=https://raw.githubusercontent.com/rancher/charts/dev-v2.6/charts/rancher-monitoring/100.1.1%2Bup19.0.3/values.yaml \
-  --version=100.1.1+up19.0.3 --wait=true rancher-monitoring \
-  http://charts.rancher.io/assets/rancher-monitoring/rancher-monitoring-100.1.0+up19.0.3.tgz
+  --values=https://raw.githubusercontent.com/rancher/charts/release-v2.6/charts/rancher-monitoring/100.1.2%2Bup19.0.3/values.yaml \
+  --version=100.1.2+up19.0.3 --wait=true rancher-monitoring \
+  http://charts.rancher.io/assets/rancher-monitoring/rancher-monitoring-100.1.2+up19.0.3.tgz
 
 # Wait for all the deployments to become available
 for deploy in $(kubectl get deploy -n cattle-monitoring-system -o name)
