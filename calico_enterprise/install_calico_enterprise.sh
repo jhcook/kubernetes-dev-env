@@ -70,30 +70,20 @@ kubectl create secret generic tigera-pull-secret \
 # Install Tigera custom resources
 kubectl apply -f https://docs.tigera.io/manifests/custom-resources.yaml
 
-# Wait until apiserver is Available
-printf "Waiting on APIServer: "
-while :
+# Wait until apiserver and calico are Available
+for serv in apiserver calico
 do
-  status="$(kubectl get tigerastatus apiserver --no-headers 2>&1 | awk '{print$2}')"
-  if [ "${status}" == "True" ]
-  then
-    printf "Available\n"
-    break
-  fi
-  sleep 2
-done
-
-# Wait on calico to become Available
-printf "Waiting on Calico: "
-while :
-do
-  status="$(kubectl get tigerastatus calico --no-headers 2>&1 | awk '{print$2}')"
-  if [ "${status}" == "True" ]
-  then
-    printf "Available\n"
-    break
-  fi
-  sleep 2
+  printf "Waiting on %s: " "${serv}"
+  while :
+  do
+    status="$(kubectl get tigerastatus ${serv} --no-headers 2>&1 | awk '{print$2}')"
+    if [ "${status}" == "True" ]
+    then
+      printf "Available\n"
+      break
+    fi
+    sleep 2
+  done
 done
 
 # Install the Calico Enterprise license
