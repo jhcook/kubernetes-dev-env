@@ -15,6 +15,25 @@
 
 _NS_="tigera-operator"
 
+# Create persistent volumes
+for i in {1..5}
+do
+  cat <<EOF | kubectl apply -f -
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: pv000${i}
+spec:
+  accessModes:
+    - ReadWriteOnce
+  capacity:
+    storage: 50Gi
+  storageClassName: tigera-elasticsearch
+  hostPath:
+    path: /data/pv000${i}/
+EOF
+done
+
 # Create a StorageClass
 cat <<EOF | kubectl apply -f -
 apiVersion: storage.k8s.io/v1
