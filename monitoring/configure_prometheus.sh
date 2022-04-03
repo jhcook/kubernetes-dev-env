@@ -11,6 +11,8 @@
 #
 # Author: Justin Cook
 
+# shellcheck source=/dev/null
+. env.sh
 
 # Create services for Prometheus discovery
 kubectl apply -f - <<EOF
