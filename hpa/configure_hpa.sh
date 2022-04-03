@@ -7,6 +7,9 @@
 #
 # Author: Justin Cook
 
+# shellcheck source=/dev/null
+. env.sh
+
 # Add the Keda Helm chart repository
 helm repo add kedacore https://kedacore.github.io/charts
 helm repo update

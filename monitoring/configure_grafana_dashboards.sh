@@ -8,6 +8,9 @@
 
 shopt -s nullglob
 
+# shellcheck source=/dev/null
+. env.sh
+
 for dashboard in monitoring/dashboards/*.{yaml,json}
 do
   printf "Applying Grafana dashboard: %s\n" "${dashboard}"

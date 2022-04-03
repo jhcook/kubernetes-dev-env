@@ -6,6 +6,9 @@
 
 set -o errexit
 
+# shellcheck source=/dev/null
+. env.sh
+
 # Check if the virtualenv exists. If not, create it.
 if [ ! -d "venv" ]
 then

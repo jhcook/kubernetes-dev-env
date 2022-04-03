@@ -11,6 +11,9 @@
 
 set -o errexit
 
+# shellcheck source=/dev/null
+. env.sh
+
 # Add the applicable Helm chards to the repo and update
 helm repo add rancher-monitoring-crd http://charts.rancher.io
 helm repo add rancher-monitoring http://charts.rancher.io

@@ -22,6 +22,9 @@ set -o errexit
 set -o nounset
 set -o pipefail
 
+# shellcheck source=/dev/null
+. env.sh
+
 _NS_="tigera-operator"
 
 # Remove master taint
@@ -134,7 +137,11 @@ do
 done
 
 # Install the Calico Enterprise license
-kubectl apply -f calico_enterprise/calico-enterprise-license.yaml
+if ! kubectl apply -f calico_enterprise/calico-enterprise-license.yaml
+then
+  sleep 5
+  kubectl apply -f calico_enterprise/calico-enterprise-license.yaml
+fi
 
 # Wait for all components to become available
 printf "Waiting on all components: "

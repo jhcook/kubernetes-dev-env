@@ -9,6 +9,9 @@
 
 set -o errexit
 
+# shellcheck source=/dev/null
+. env.sh
+
 # Install Tigera operator
 kubectl apply -f https://projectcalico.docs.tigera.io/manifests/tigera-operator.yaml
 

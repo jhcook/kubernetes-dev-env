@@ -5,6 +5,9 @@
 #
 # Author: Justin Cook
 
+# shellcheck source=/dev/null
+. env.sh
+
 trap "exit" INT
 
 # Configure Minikube

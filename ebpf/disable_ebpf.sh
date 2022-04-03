@@ -2,6 +2,8 @@
 #
 # Disable eBPF and switch to kube-proxy
 
+# shellcheck source=/dev/null
+. env.sh
 
 # Switch dataplane to Iptables
 kubectl patch installation.operator.tigera.io default --type merge -p '{"spec":{"calicoNetwork":{"linuxDataplane":"Iptables"}}}'

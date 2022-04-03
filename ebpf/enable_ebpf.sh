@@ -7,6 +7,9 @@
 
 set -x
 
+# shellcheck source=/dev/null
+. env.sh
+
 IFS=':' read -ra ENDPNT <<< "$(kubectl get endpoints kubernetes | awk '/^kubernetes/{print$2}')"
 
 cat <<EOF | kubectl apply -f -
