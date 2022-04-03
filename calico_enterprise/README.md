@@ -6,7 +6,7 @@ Place your pull secret and Calico Enterprise License in this directory using
 the following file names:
 
 * quay.io pull secret: `tigera-pull-secret.json`
-* Calcio Enterprise License: `calico-enterprise-license.yaml`
+* Calico Enterprise License: `calico-enterprise-license.yaml`
 
 Git is configured to ignore these filenames. 
 
