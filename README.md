@@ -1,5 +1,19 @@
 # Kubernetes Development Environment
 
+The Kubernetes Development Environment is a full-featured environment rendering
+the full stack for a feature rich experience. 
+
+By default, it uses Minikube, makes Rancher and Calico available, and provides
+Prometheus monitoring and Grafana dashboards. The full stack is delivered as
+code and is completely modular. 
+
+It features a sidecar that provides TCP ESTABLISHED connections using
+conntrack. This sidecar is featured in an example with Keda to scale objects
+based on connection rate. 
+
+The stack provides the latest Rancher release (2.6.4) and Calico with an option
+for Calico Enterprise (3.13) -- for those with appropriate credentials.
+
 ## Up and Running
 
 The following instructions have been wrapped and provided in `quickstart.sh`.
@@ -90,7 +104,8 @@ sh monitoring/configure_grafana_dashboards.sh
 * https://www.nginx.com/blog/microservices-march-reduce-kubernetes-latency-with-autoscaling/
 
 This can be done at any time and is simply a demonstration of using Keda to
-scale workloads using Prometheus metrics.
+scale workloads using Prometheus metrics. For more information, please see the
+`hpa` directory.
 
 ```
 sh hpa/configure_hpa.sh
@@ -125,3 +140,11 @@ sh ebpf/enable_ebpf.sh
 ```
 sh ebpf/disable_ebpf.sh
 ```
+
+## Calico Enterprise
+
+For those with a valid Tigera Calico Enterprise license, please see the
+`calico_enterprise` folder for more information. One caveat, it is recommended
+to isnstall Rancher and monitoring before Calcio Enterprise if you prefer the
+full stack to be available. This is due to the Prometheus operator and pull
+secret visibility to the operator.
