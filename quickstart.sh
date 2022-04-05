@@ -11,18 +11,18 @@
 trap "exit" INT
 
 # Configure Minikube
-sh setup_k8s.sh
+bash setup_k8s.sh
 
 # Install Calico
-sh install_calico.sh
+bash install_calico.sh
 
 # Install Rancher
-sh install_rancher.sh
+bash install_rancher.sh
 
 # Install and configure Prometheus metrics / Grafana dashboards
-sh install_monitoring.sh
-sh monitoring/configure_prometheus.sh
-sh monitoring/configure_grafana_dashboards.sh
+bash install_monitoring.sh
+bash monitoring/configure_prometheus.sh
+bash monitoring/configure_grafana_dashboards.sh
 
 # Install boutique
-sh install_boutique.sh
+bash install_boutique.sh
