@@ -1,4 +1,4 @@
-#!/usr/bin/env sh
+#!/usr/bin/env bash
 #
 # Install the Tigera Calico operator and deploy Calico CNI
 # Watch pods until calico-kube-controllers is deployed
