@@ -32,7 +32,7 @@ available with `brew`.
 * Virtualenv
 
 ```
-sh quickstart.sh
+bash quickstart.sh
 ...
 Open browser to: http://10.109.73.206:30875
 
@@ -56,14 +56,14 @@ cidr range to 172.16.0.0/20, and set the Kubernetes version.
 * https://minikube.sigs.k8s.io/docs/handbook/addons/ingress-dns/
 
 ```
-sh setup_k8s.sh
+bash setup_k8s.sh
 ```
 
 ## Install Calico CNI
 * https://projectcalico.docs.tigera.io/getting-started/kubernetes/minikube
 
 ```
-sh install_calico.sh
+bash install_calico.sh
 ```
 
 ## Add Nodes to Minikube
@@ -76,7 +76,7 @@ minikube node add --worker -p calico
 * https://rancher.com/docs/rancher/v2.6/en/installation/install-rancher-on-k8s/
 
 ```
-sh install_rancher.sh
+bash install_rancher.sh
 ```
 
 ## Install / Configure Prometheus and Grafana 
@@ -87,16 +87,16 @@ sh install_rancher.sh
 * https://projectcalico.docs.tigera.io/maintenance/monitor/monitor-component-metrics
 
 ```
-sh install_monitoring.sh
+bash install_monitoring.sh
 ```
 
 Add the services necessary and create the Prometheus service monitors for
 Calico.
 
 ```
-sh monitoring/configure_prometheus.sh
+bash monitoring/configure_prometheus.sh
 ...
-sh monitoring/configure_grafana_dashboards.sh
+bash monitoring/configure_grafana_dashboards.sh
 ...
 ```
 
@@ -108,7 +108,7 @@ scale workloads using Prometheus metrics. For more information, please see the
 `hpa` directory.
 
 ```
-sh hpa/configure_hpa.sh
+bash hpa/configure_hpa.sh
 ```
 
 The script above creates an ingress for http://boutique.test which becomes
@@ -122,7 +122,7 @@ Create a virtual environment and install Locust. Then, clone the above repo,
 install the application, setup Locust, and execute the load test.
 
 ```
-sh install_boutique.sh
+bash install_boutique.sh
 ...
 ```
 
@@ -132,13 +132,13 @@ Open your browser and load the sites (Boutique and Locust) displayed.
 * https://projectcalico.docs.tigera.io/maintenance/ebpf/enabling-bpf
 
 ```
-sh ebpf/enable_ebpf.sh
+bash ebpf/enable_ebpf.sh
 ```
 
 ## Disable eBPF
 
 ```
-sh ebpf/disable_ebpf.sh
+bash ebpf/disable_ebpf.sh
 ```
 
 ## Calico Enterprise
