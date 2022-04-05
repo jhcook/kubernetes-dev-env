@@ -11,6 +11,7 @@
 # References:
 #  * https://docs.tigera.io/getting-started/kubernetes/rancher
 #  * https://docs.tigera.io/maintenance/monitor/support
+#  * https://docs.tigera.io/getting-started/cnx/authentication-quickstart
 #  * https://minikube.sigs.k8s.io/docs/handbook/persistent_volumes/
 #
 # Tested on:
@@ -160,6 +161,12 @@ kubectl apply -f https://docs.tigera.io/manifests/tigera-policies.yaml
 kubectl create sa admin -n default --dry-run=client -o yaml | kubectl apply -f -
 kubectl create clusterrolebinding admin-access --clusterrole tigera-network-admin\
   --serviceaccount default:admin --dry-run=client -o yaml | kubectl apply -f -
+
+# Output elastic and admin user's token
+printf "\nKibana \"elastic\" user token: "
+kubectl -n tigera-elasticsearch get secret tigera-secure-es-elastic-user -o go-template='{{.data.elastic | base64decode}}' && echo
+
+printf "\nCalico \"admin\" user token: "
 kubectl get secret "$(kubectl get serviceaccount admin -o jsonpath='{range .secrets[*]}{.name}{"\n"}{end}' | grep token)" \
   -o go-template='{{.data.token | base64decode}}' && echo
 
