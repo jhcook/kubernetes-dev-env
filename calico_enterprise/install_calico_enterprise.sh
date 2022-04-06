@@ -136,6 +136,7 @@ do
   tigerastatus "${serv}"
   printf "Available\n"
 done
+sleep 3
 
 # Install the Calico Enterprise license
 if ! kubectl apply -f calico_enterprise/calico-enterprise-license.yaml
