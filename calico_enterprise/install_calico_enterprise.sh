@@ -31,14 +31,12 @@ _NS_="tigera-operator"
 # Remove master taint
 kubectl taint nodes --all node-role.kubernetes.io/master- || /usr/bin/true
 
-# Create persistent volumes
-for i in {1..5}
-do
-  cat <<EOF | kubectl apply -f -
+# Create a persistent volume for ElasticSearch
+cat <<EOF | kubectl apply -f -
 apiVersion: v1
 kind: PersistentVolume
 metadata:
-  name: pv000${i}
+  name: pv0001
 spec:
   accessModes:
     - ReadWriteOnce
@@ -46,9 +44,8 @@ spec:
     storage: 50Gi
   storageClassName: tigera-elasticsearch
   hostPath:
-    path: /data/pv000${i}/
+    path: /data/pv0001/
 EOF
-done
 
 # Create a StorageClass
 cat <<EOF | kubectl apply -f -
@@ -118,8 +115,9 @@ tigerastatus() {
   success_count=0
   until [ "$success_count" -gt 2 ]
   do
-    status="$(kubectl get tigerastatus $1 --no-headers | awk '{print$2}')"
-    if [ "${status:-False}" == "True" ]
+    status=$(kubectl get tigerastatus "$1" --no-headers)
+    avail=$(echo "${status:${#1}+3:5}" | xargs)
+    if [ "${avail:-False}" == "True" ]
     then
       ((success_count++))
     else
@@ -136,14 +134,9 @@ do
   tigerastatus "${serv}"
   printf "Available\n"
 done
-sleep 3
 
 # Install the Calico Enterprise license
-if ! kubectl apply -f calico_enterprise/calico-enterprise-license.yaml
-then
-  sleep 5
-  kubectl apply -f calico_enterprise/calico-enterprise-license.yaml
-fi
+kubectl apply -f calico_enterprise/calico-enterprise-license.yaml
 
 # Wait for all components to become available
 printf "Waiting on all components: "
@@ -165,7 +158,8 @@ kubectl create clusterrolebinding admin-access --clusterrole tigera-network-admi
 
 # Output elastic and admin user's token
 printf "\nKibana \"elastic\" user token: "
-kubectl -n tigera-elasticsearch get secret tigera-secure-es-elastic-user -o go-template='{{.data.elastic | base64decode}}' && echo
+kubectl -n tigera-elasticsearch get secret tigera-secure-es-elastic-user \
+  -o go-template='{{.data.elastic | base64decode}}' && echo
 
 printf "\nCalico \"admin\" user token: "
 kubectl get secret "$(kubectl get serviceaccount admin -o jsonpath='{range .secrets[*]}{.name}{"\n"}{end}' | grep token)" \
