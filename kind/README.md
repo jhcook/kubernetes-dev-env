@@ -86,3 +86,23 @@ calico-cluster-control-plane   NotReady   control-plane,master   43s   v1.23.4
 calico-cluster-worker          NotReady   <none>                 10s   v1.23.4
 calico-cluster-worker2         NotReady   <none>                 10s   v1.23.4
 ```
+
+# Make all nodes schedulable
+
+If you are restricted on assets, to avoid contention, remove master node taint.
+
+```
+$ kubectl taint nodes --all node-role.kubernetes.io/master- || /usr/bin/true
+node/calico-cluster-control-plane untainted
+taint "node-role.kubernetes.io/master" not found
+taint "node-role.kubernetes.io/master" not found
+```
+
+# Ingress
+
+Kind clusters do not have an Ingress controller configured. So, install one and
+installed applications are easily usable.
+
+```
+$ bash kind/install_ingress.sh
+```
