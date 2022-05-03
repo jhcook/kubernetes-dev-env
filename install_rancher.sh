@@ -14,7 +14,7 @@ kubectl apply -f https://github.com/jetstack/cert-manager/releases/download/v1.5
 
 # Add the appropriate Helm repos and update
 helm repo add jetstack https://charts.jetstack.io
-helm repo add rancher-latest https://releases.rancher.com/server-charts/latest
+helm repo add rancher-stable https://releases.rancher.com/server-charts/stable
 helm repo update
 
 # Install cert-manager
