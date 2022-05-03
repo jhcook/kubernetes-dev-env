@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 #
 # Setup a three-node Kubernetes cluster with ingress, ingress-dns, and
-# metrics-server with CNI plugin. Configure the pod network as 172.16.0.0/20.
+# metrics-server with CNI plugin. Configure the pod network as ${POD_NET_CIDR}.
 # Use Kubernetes v1.23.4 as that is latest supported by Rancher. Finally, set
 # resolver to forward .test DNS queries to this cluster.
 #
@@ -15,15 +15,23 @@
 #
 # Author: Justin Cook
 
-minikube --addons ingress,ingress-dns,metrics-server,registry \
-         --insecure-registry "10.0.0.0/24" \
+# shellcheck source=/dev/null
+. env.sh
+
+# The below options can be used with a docker provider such as lima/colima.
+#         --driver=docker \
+#         --cache-images=true \
+#         --container-runtime=containerd \
+
+minikube --addons=ingress,ingress-dns,metrics-server,registry \
+         --insecure-registry="10.0.0.0/24" \
          --network-plugin=cni \
-         --extra-config=kubeadm.pod-network-cidr=172.16.0.0/20 \
+         --extra-config="kubeadm.pod-network-cidr=${POD_NET_CIDR}" \
+         --service-cluster-ip-range='10.96.0.0/16' \
          --memory=8g \
          --kubernetes-version=v1.23.4 \
          --nodes=3 \
-         --insecure-registry="ghcr.io" \
-         -p calico \
+         --insecure-registry="ghcr.io","k8s.gcr.io","gcr.io" \
          start
 
 if [ ! -d "/etc/resolver" ]
@@ -37,7 +45,7 @@ case ${PLATFORM} in
     printf "Configuring macOS to forward .test to Minikube\n"
     sudo bash -c "cat - > /etc/resolver/minikube-test <<EOF
 domain test
-nameserver $(minikube ip -p calico)
+nameserver $(minikube ip)
 search_order 1
 timeout 5
 EOF
@@ -55,7 +63,7 @@ EOF
         then
           sudo mkdir /etc/NetworkManager/dnsmasq.d
         fi
-        sudo bash -c "echo \"server=/test/$(minikube ip -p calico)\" > \
+        sudo bash -c "echo \"server=/test/$(minikube ip)\" > \
           /etc/NetworkManager/dnsmasq.d/minikube.conf"
         sudo systemctl restart NetworkManager.service
       fi
@@ -63,7 +71,7 @@ EOF
     then
       sudo bash -c "cat - > /etc/resolvconf/resolv.conf.d/base <<EOF
 search test
-nameserver $(minikube ip -p calico)
+nameserver $(minikube ip)
 timeout 5
 EOF
 "
