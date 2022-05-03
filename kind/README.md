@@ -62,7 +62,7 @@ will need to allocate more cpu, memory, and disk to the virtual machine when
 invoking Colima. Then, you can create the cluster using the manifest provided:
 
 ```
-$ colima start --cpu 12 --memory 28 --disk 50
+$ colima start --cpu 6 --memory 28 --disk 50
 INFO[0000] starting colima
 INFO[0000] creating and starting ...                     context=vm
 ...
