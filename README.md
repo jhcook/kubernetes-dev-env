@@ -48,7 +48,7 @@ Prometheus metrics and Grafana dashboards; and install Boutique.
 ## Demonstration of Calico CNI with eBPF the hard way 
 
 Create a Minikube cluster enabling ingress and ingress-dns addon, set the
-cidr range to 172.16.0.0/20, and set the Kubernetes version.
+cidr range to 172.16.0.0/16, and set the Kubernetes version.
 * https://www.suse.com/suse-rancher/support-matrix/all-supported-versions/rancher-v2-6-3/
 * https://minikube.sigs.k8s.io/docs/drivers/hyperkit/
 
@@ -69,8 +69,8 @@ bash install_calico.sh
 ## Add Nodes to Minikube
 
 ```
-minikube config set memory 4096 -p calico
-minikube node add --worker -p calico
+minikube config set memory 4096
+minikube node add --worker
 ```
 ## Install Rancher
 * https://rancher.com/docs/rancher/v2.6/en/installation/install-rancher-on-k8s/

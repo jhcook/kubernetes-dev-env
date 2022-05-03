@@ -29,7 +29,7 @@ artefact (image) and push to the registry on Minikube. You need to provide
 a route from your host to Minikube like so:
 
 ```
-$ docker run --rm -it --network=host alpine ash -c "apk add socat && socat TCP-LISTEN:5000,reuseaddr,fork TCP:$(minikube ip -p calico):5000"
+$ docker run --rm -it --network=host alpine ash -c "apk add socat && socat TCP-LISTEN:5000,reuseaddr,fork TCP:$(minikube ip):5000"
 ...
 ```
 
@@ -72,9 +72,9 @@ Server started at localhost: 9100
 
 ## Container
 
-This solution was designed for Kubernetes, and as such is intendd to be run in
+This solution was designed for Kubernetes, and as such is intended to be run in
 a sidecar along the primary application. If you've got the container pushed to
-a registry, you can patch your Deployment spec as follows to provid the
+a registry, you can patch your Deployment spec as follows to provide the
 metrics.
 
 ```

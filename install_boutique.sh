@@ -39,7 +39,7 @@ done
 #BOUTIQUE=$(kubectl get service frontend-external -o \
 #           jsonpath='{.spec.clusterIP}{":"}{.spec.ports[*].nodePort}{"\n"}')
 
-BOUTIQUE="$(minikube ip -p calico):$(kubectl get service frontend-external -o \
+BOUTIQUE="$(minikube ip):$(kubectl get service frontend-external -o \
             jsonpath='{.spec.ports[*].nodePort}{"\n"}')"
 
 printf "\n\nOpen browser to: "
