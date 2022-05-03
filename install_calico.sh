@@ -29,7 +29,7 @@ spec:
     containerIPForwarding: Enabled
     ipPools:
     - blockSize: 26
-      cidr: 172.16.0.0/20
+      cidr: ${POD_NET_CIDR}
       natOutgoing: Enabled
       encapsulation: VXLANCrossSubnet
       nodeSelector: all()
@@ -61,4 +61,4 @@ watch_pid="$!"
 kubectl rollout status deploy/calico-kube-controllers -n calico-system
 
 kill -15 ${watch_pid}
-wait ${watch_pid}
+wait ${watch_pid} || /usr/bin/true
