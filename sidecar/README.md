@@ -46,6 +46,8 @@ $ docker push localhost:5000/jhcook/tcp-exporter:latest
 INFO[0000] pushing as a reduced-platform image (application/vnd.docker.distribution.manifest
 ...
 elapsed: 6.2 s                                                                    total:  20.0 M (3.2 MiB/s) 
+$ docker push localhost:5000/jhcook/tcp-exporter
+...
 ```
 
 ## Run
