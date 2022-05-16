@@ -155,8 +155,8 @@ spec:
       serverAddress: http://${PROMHOST}:9090
       metricName: boutique_tcp_port_established_connections_total
       query: |
-        sum(rate(boutique_tcp_port_established_connections_total[30s]))
-      threshold: "30"
+        sum(rate(boutique_tcp_port_established_connections_total{job =~ "recommendationservice"}[30s]))
+      threshold: "3"
 EOF
 
 kubectl apply -f - <<EOF
@@ -179,8 +179,8 @@ spec:
       serverAddress: http://${PROMHOST}:9090
       metricName: boutique_tcp_port_established_connections_total
       query: |
-        sum(rate(boutique_tcp_port_established_connections_total[30s]))
-      threshold: "60"
+        sum(rate(boutique_tcp_port_established_connections_total{job =~ "currencyservice"}[30s]))
+      threshold: "16"
 EOF
 
 kubectl apply -f - <<EOF
@@ -203,8 +203,8 @@ spec:
       serverAddress: http://${PROMHOST}:9090
       metricName: boutique_tcp_port_established_connections_total
       query: |
-        sum(rate(boutique_tcp_port_established_connections_total[30s]))
-      threshold: "60"
+        sum(rate(boutique_tcp_port_established_connections_total{job =~ "productcatalogservice"}[30s]))
+      threshold: "5"
 EOF
 
 kubectl apply -f - <<EOF
@@ -227,8 +227,8 @@ spec:
       serverAddress: http://${PROMHOST}:9090
       metricName: boutique_tcp_port_established_connections_total
       query: |
-        sum(rate(boutique_tcp_port_established_connections_total[30s]))
-      threshold: "8"
+        sum(rate(boutique_tcp_port_established_connections_total{job =~ "cartservice"}[30s]))
+      threshold: "3"
 EOF
 
 kubectl apply -f - <<EOF
