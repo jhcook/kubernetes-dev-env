@@ -30,6 +30,8 @@ available with `brew`.
 * Git
 * Pip
 * Virtualenv
+* yq
+* jq
 
 ```
 bash quickstart.sh
