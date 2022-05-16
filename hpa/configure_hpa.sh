@@ -24,6 +24,9 @@
 #
 # References:
 # * https://www.nginx.com/blog/microservices-march-reduce-kubernetes-latency-with-autoscaling/
+# * https://stackoverflow.com/questions/62578789/kubectl-patch-is-it-possible-to-add-multiple-values-to-an-array-within-a-sinlge
+#
+# Requires: jq, yq
 #
 # Author: Justin Cook
 
@@ -54,7 +57,7 @@ kubectl apply -f hpa/frontend-ingress.yaml
 # Prometheus. Patch the cooresponding service to include said endpoint
 # then follow up by creating a ServiceMonitor. Give yourself a pat on the back,
 # Prometheus is now collecting metrics from your clever exporter.
-for deploy in $(kubectl get deploy -n default -o name)
+for deploy in $(kubectl get deploy -n default -o name | grep -E 'service$')
 do
   SVCPORT="$(kubectl get svc ${deploy#*/} -n default -o \
              jsonpath='{.spec.ports[-1].port}' 2>/dev/null)" || continue
@@ -67,26 +70,47 @@ do
   -p="{\"metadata\": {\"labels\": {\"k8s-app\": \"${deploy#*/}\"}}}"
 
   printf "Patching %s\n" "${deploy}"
-  # kubectl patch --patch-file does not accept here docs :-/
-  cat << EOF >/tmp/$$.tmp
-spec:
-  template:
-    spec:
-      containers:
-      - name: tcp-exporter
-        image: localhost:5000/jhcook/tcp-exporter:latest
-        imagePullPolicy: IfNotPresent
-        securityContext:
-          capabilities:
-            add: ["NET_ADMIN"]
-        args: ["9100", "${SVCPORT}"]
-        ports:
-          - containerPort: 9100
-            protocol: TCP
-EOF
-  kubectl patch "${deploy}" -n default --patch-file /tmp/$$.tmp
-  rm -f /tmp/$$.tmp
 
+  # Create a JSON patch for the tcp-exporter container
+  TEPATCH=$(yq -o json -I0 <<-EOF
+name: tcp-exporter
+image: localhost:5000/jhcook/tcp-exporter:latest
+imagePullPolicy: Always
+securityContext:
+  capabilities:
+    add: ["NET_ADMIN", "SYS_PTRACE"]
+args: ["9100", "${SVCPORT}"]
+ports:
+  - containerPort: 9100
+    protocol: TCP
+EOF
+)
+
+  # Create a JSON patch for the conntrack init container
+  CIPATCH=$(yq -o json -I0 <<-EOF
+name: init-networking
+image: localhost:5000/jhcook/conntrack-network-init:latest
+resources: {}
+terminationMessagePath: /dev/termination-log
+terminationMessagePolicy: File
+imagePullPolicy: Always
+securityContext:
+  capabilities:
+    add:
+      - NET_ADMIN
+  privileged: true
+EOF
+)
+
+  # Apply the tcp-exporter and init container patches and enable shared process
+  # namespace
+  kubectl get "${deploy}" -n default -o json | \
+    jq ".spec.template.spec.containers[1] = ${TEPATCH}" | \
+    jq ".spec.template.spec.initContainers[0] = ${CIPATCH}" | \
+    jq '.spec.template.spec.shareProcessNamespace = true' | \
+    kubectl apply -f -
+
+  # Apply the ServiceMonitor to enable Prometheus scraping
   kubectl apply -f - <<EOF
 apiVersion: monitoring.coreos.com/v1
 kind: ServiceMonitor
@@ -129,9 +153,9 @@ spec:
   - type: prometheus
     metadata:
       serverAddress: http://${PROMHOST}:9090
-      metricName: nginx_ingress_controller_requests
+      metricName: boutique_tcp_port_established_connections_total
       query: |
-        sum(rate(nginx_ingress_controller_requests[30s]))
+        sum(rate(boutique_tcp_port_established_connections_total[30s]))
       threshold: "30"
 EOF
 
@@ -153,9 +177,9 @@ spec:
   - type: prometheus
     metadata:
       serverAddress: http://${PROMHOST}:9090
-      metricName: nginx_ingress_controller_requests
+      metricName: boutique_tcp_port_established_connections_total
       query: |
-        sum(rate(nginx_ingress_controller_requests[30s]))
+        sum(rate(boutique_tcp_port_established_connections_total[30s]))
       threshold: "60"
 EOF
 
@@ -177,9 +201,9 @@ spec:
   - type: prometheus
     metadata:
       serverAddress: http://${PROMHOST}:9090
-      metricName: nginx_ingress_controller_requests
+      metricName: boutique_tcp_port_established_connections_total
       query: |
-        sum(rate(nginx_ingress_controller_requests[30s]))
+        sum(rate(boutique_tcp_port_established_connections_total[30s]))
       threshold: "60"
 EOF
 
@@ -201,9 +225,9 @@ spec:
   - type: prometheus
     metadata:
       serverAddress: http://${PROMHOST}:9090
-      metricName: nginx_ingress_controller_requests
+      metricName: boutique_tcp_port_established_connections_total
       query: |
-        sum(rate(nginx_ingress_controller_requests[30s]))
+        sum(rate(boutique_tcp_port_established_connections_total[30s]))
       threshold: "30"
 EOF
 
@@ -218,7 +242,7 @@ spec:
     kind: Deployment
     name: frontend
   minReplicaCount: 1
-  maxReplicaCount: 20
+  maxReplicaCount: 5
   cooldownPeriod: 30
   pollingInterval: 1
   triggers:
