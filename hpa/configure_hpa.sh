@@ -228,7 +228,7 @@ spec:
       metricName: boutique_tcp_port_established_connections_total
       query: |
         sum(rate(boutique_tcp_port_established_connections_total[30s]))
-      threshold: "30"
+      threshold: "8"
 EOF
 
 kubectl apply -f - <<EOF
