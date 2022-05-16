@@ -37,13 +37,29 @@ import http.server
 from signal import signal, SIGINT
 from subprocess import Popen, PIPE, CalledProcessError
 from threading import Thread, Lock
+from itertools import count
 from socketserver import TCPServer
 from sys import argv, stderr, exit
 from queue import Queue, Empty
-from os import _exit, stat
+from os import _exit
 from time import sleep
 
-num_connections = 0
+class FastWriteCounter(object):
+    def __init__(self):
+        self._number_of_read = 0
+        self._counter = count()
+        self._read_lock = Lock()
+
+    def inc(self):
+        next(self._counter)
+
+    def value(self):
+        with self._read_lock:
+            value = next(self._counter) - self._number_of_read
+            self._number_of_read += 1
+        return value
+
+num_connections = FastWriteCounter()
 state = 'running'
 watch_port = 8080
 
@@ -64,8 +80,8 @@ class PrometheusServiceExporter(http.server.SimpleHTTPRequestHandler):
 
     def do_GET(self):
         if self.path == '/metrics':
-            global num_connections, metrics
-            payload = bytes(self.metrics.format(num_connections),
+            global num_connections
+            payload = bytes(self.metrics.format(num_connections.value()),
                             "utf8")
             self.send_response(200)
             self.send_header("Content-Length", len(payload))
@@ -77,13 +93,13 @@ class PrometheusServiceExporter(http.server.SimpleHTTPRequestHandler):
             self.send_header("Connection", "close")
             self.end_headers()
 
-def conntrack_events():
+def conntrack_events(num_connections):
     """Use conntrack for watching ESTABLISHED TCP connections on watch_port.
 
     This requires root privileges and will raise CalledProcessError if the
     correct privileges are not available.
     """
-    global num_connections, watch_port, state
+    global watch_port, state
     try:
         subp = Popen(['conntrack', '-E', '-p', 'tcp', '--dport',
                       str(watch_port), '--state', 'ESTABLISHED'], stdout=PIPE)
@@ -93,18 +109,18 @@ def conntrack_events():
         while True:
             connection = subp.stdout.readline().decode('utf8')
             if connection: 
-                num_connections += 1
+                num_connections.inc()
     except (CalledProcessError, FileNotFoundError) as err:
         print(err)
         state = 'stopped'
         exit(1)
 
-def get_conns():
+def get_conns(discover_conns):
     """Open /proc/net/tcp, look for ESTABLISHED TCP connections, and inspect
     the local port of each. If it is the one we are looking for, add it to the
     queue for sorting and counting.
     """
-    global num_connections, watch_port, state, discover_conns
+    global watch_port, state
     print("get_conns: starting")
     while True:
         try:
@@ -130,8 +146,8 @@ def get_conns():
             print(err, file=stderr)
             _exit(2)
 
-def count_conns():
-    global existing_conns, discover_conns, num_connections, state
+def count_conns(existing_conns, discover_conns, num_connections):
+    global state
     print("count_conns: starting")
     while True:
         if state != 'running': break
@@ -146,7 +162,7 @@ def count_conns():
                 existing_conns.remove(conn)
         for conn in conns:
             if conn not in existing_conns:
-                num_connections += 1
+                num_connections.inc()
                 existing_conns.append(conn)
         conns_lock.release()
         sleep(1)
@@ -165,7 +181,7 @@ def usage():
         "example: tcp_exporter.py 9100 8080")
 
 def main():
-    global watch_port, state
+    global watch_port, state, num_connections
     threads = []
 
     # Since we're looping and catching Exception, we need to handle SIGINT
@@ -177,11 +193,11 @@ def main():
     except IndexError as err:
         print(usage(), file=stderr)
         exit(1)
-        
+
     # Try and start conntrack, wait, and then check state
     port_discover = Thread(name='conntrack-events-daemon', 
-                           target=conntrack_events)
-    port_discover.setDaemon(True)
+                           target=conntrack_events, args=(num_connections, ))
+    port_discover.daemon = True
     port_discover.start()
     sleep(.5)
 
@@ -192,15 +208,17 @@ def main():
         # Create a thread that will scrape existing tcp connections and place
         # matching connections on a queue for counting.
         port_discover = Thread(name='port-discover-daemon', 
-                            target=get_conns)
-        port_discover.setDaemon(True)
+                               target=get_conns, args=(discover_conns))
+        port_discover.daemon = True
         port_discover.start()
         threads.append(port_discover)
 
         # Create a thread that will count the queue.
         port_counter = Thread(name='port-counter-daemon', 
-                            target=count_conns)
-        port_counter.setDaemon(True)
+                              target=count_conns, args=(existing_conns,
+                                                        discover_conns,
+                                                        num_connections))
+        port_counter.daemon = True
         port_counter.start()
         threads.append(port_counter)
 
