@@ -4,6 +4,11 @@ kind: Cluster
 apiVersion: kind.x-k8s.io/v1alpha4
 name: calico-cluster
 featureGates: {}
+# Local registry
+containerdConfigPatches:
+- |-
+  [plugins."io.containerd.grpc.v1.cri".registry.mirrors."localhost:${reg_port}"]
+    endpoint = ["http://kind-registry:5000"]
 networking:
 #  disableDefaultCNI: true
   apiServerAddress: "127.0.0.1"
