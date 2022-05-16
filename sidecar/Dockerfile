@@ -1,6 +1,6 @@
 FROM python:3.9-alpine
 
-RUN apk add conntrack-tools
+RUN apk add conntrack-tools curl
 COPY tcp_exporter.py /
 
 ENTRYPOINT ["python3", "/tcp_exporter.py"]
