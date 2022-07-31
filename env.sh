@@ -24,6 +24,17 @@
 #
 # Author: Justin Cook
 
+# Check if all the necessary utilities are available or exit
+# `kubectl` is unnecessary in this context as it is later aliased to minikube
+for cmd in "minikube" "helm" "git" "virtualenv" "yq" "jq"
+do
+  if ! command -v "${cmd}" &> /dev/null
+  then
+      echo "command: ${cmd} could not be found"
+      exit 1
+  fi
+done
+
 # Pod network CIDR
 export POD_NET_CIDR="172.16.0.0/16"
 
