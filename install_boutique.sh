@@ -36,6 +36,7 @@ then
 fi
 
 # Activate the virtualenv and install locust
+# shellcheck source=/dev/null
 source ./venv/bin/activate
 pip install locust
 
