@@ -30,6 +30,8 @@
 #
 # Author: Justin Cook
 
+set -o errexit
+
 # shellcheck source=/dev/null
 . env.sh
 
@@ -59,6 +61,7 @@ kubectl apply -f hpa/frontend-ingress.yaml
 # Prometheus is now collecting metrics from your clever exporter.
 for deploy in $(kubectl get deploy -n default -o name | grep -E 'service$')
 do
+  # shellcheck disable=SC2086
   SVCPORT="$(kubectl get svc ${deploy#*/} -n default -o \
              jsonpath='{.spec.ports[-1].port}' 2>/dev/null)" || continue
   
