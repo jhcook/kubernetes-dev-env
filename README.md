@@ -9,9 +9,9 @@ code and is completely modular.
 
 It features a sidecar that provides TCP ESTABLISHED connections using
 conntrack. This sidecar is featured in an example with Keda to scale objects
-based on connection rate. 
+based on connection rate. This can be found in `hpa` directory. 
 
-The stack provides the latest Rancher release (2.6.4) and Calico with an option
+The stack provides the latest Rancher release (2.6.5) and Calico with an option
 for Calico Enterprise (3.13) -- for those with appropriate credentials.
 
 ## Up and Running
@@ -28,7 +28,6 @@ available with `brew`.
 * kubectl
 * Helm
 * Git
-* Pip
 * Virtualenv
 * yq
 * jq
