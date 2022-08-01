@@ -77,7 +77,7 @@ do
   # Create a JSON patch for the tcp-exporter container
   TEPATCH=$(yq -o json -I0 <<-EOF
 name: tcp-exporter
-image: localhost:5000/jhcook/tcp-exporter:latest
+image: localhost:${DOCKER_REG_PORT}/boutique/tcp-exporter:latest
 imagePullPolicy: Always
 securityContext:
   capabilities:
@@ -92,7 +92,7 @@ EOF
   # Create a JSON patch for the conntrack init container
   CIPATCH=$(yq -o json -I0 <<-EOF
 name: init-networking
-image: localhost:5000/jhcook/conntrack-network-init:latest
+image: localhost:${DOCKER_REG_PORT}/boutique/conntrack-network-init:latest
 resources: {}
 terminationMessagePath: /dev/termination-log
 terminationMessagePolicy: File
