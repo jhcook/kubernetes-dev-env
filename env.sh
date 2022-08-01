@@ -49,3 +49,9 @@ then
 #else
 #  alias kubectl="kubectl --kubeconfig=kubeconfig --insecure-skip-tls-verify=true"
 fi >/dev/null 2>&1
+
+# Which port should Docker registry listen?
+export DOCKER_REG_PORT="5000"
+
+# Where is Docker available?
+export DOCKER_HOST="tcp://localhost:2375"
