@@ -8,7 +8,7 @@ featureGates: {}
 containerdConfigPatches:
 - |-
   [plugins."io.containerd.grpc.v1.cri".registry.mirrors."localhost:${reg_port}"]
-    endpoint = ["http://kind-registry:5000"]
+    endpoint = ["http://kind-registry:${DOCKER_REG_PORT}"]
 networking:
 #  disableDefaultCNI: true
   apiServerAddress: "127.0.0.1"

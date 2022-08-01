@@ -13,8 +13,9 @@ in the examples using the `sidecar` subdirectory.
 
 ## Prerequisites
 
-A local Docker registry running on localhost:5000 and accessible by Kubernetes.
-For more information, please see the `sidecar` subdirectory.
+A Docker registry running on $(minikube ip):${DOCKER_REG_PORT} and accessible
+to localhost:${DOCKER_REG_PORT}. For more information, please see the `sidecar`
+subdirectory.
 
 ## Installation
 

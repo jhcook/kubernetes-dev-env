@@ -8,13 +8,13 @@ to enable this.
 Build the handy little init container like so:
 
 ```
-$ docker build -t localhost:5000/jhcook/conntrack-network-init .
+$ docker build -t localhost:${DOCKER_REG_PORT}/boutique/conntrack-network-init .
 ```
 
 And now push it to the registry:
 
 ```
-$ docker push localhost:5000/jhcook/conntrack-network-init:latest
+$ docker push localhost:${DOCKER_REG_PORT}/boutique/conntrack-network-init:latest
 ```
 
 Finally, pop an initcontainer stanza in the workload like so:
@@ -22,7 +22,7 @@ Finally, pop an initcontainer stanza in the workload like so:
 ```
       initContainers:
         - name: conntrack-networking
-          image: localhost:5000/jhcook/conntrack-network-init:latest
+          image: localhost:${DOCKER_REG_PORT}/boutique/conntrack-network-init:latest
           resources: {}
           terminationMessagePath: /dev/termination-log
           terminationMessagePolicy: File

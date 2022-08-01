@@ -29,7 +29,8 @@ artefact (image) and push to the registry on Minikube. You need to provide
 a route from your host to Minikube like so:
 
 ```
-$ docker run --rm -it --network=host alpine ash -c "apk add socat && socat TCP-LISTEN:5000,reuseaddr,fork TCP:$(minikube ip):5000"
+$ docker run --rm -it --network=host alpine ash -c \
+"apk add socat && socat TCP-LISTEN:${DOCKER_REG_PORT},reuseaddr,fork TCP:$(minikube ip):${DOCKER_REG_PORT}"
 ...
 ```
 
@@ -38,15 +39,15 @@ leave the above running and switch to another window, or perhaps you're clever
 enough to have spawned a daemon:
 
 ```
-$ docker build -t localhost:5000/jhcook/tcp-exporter .
+$ docker build -t localhost:${DOCKER_REG_PORT}/boutique/tcp-exporter .
 [+] Building 3.2s (8/8) FINISHED                                                                  
 ...
-unpacking localhost:5000/jhcook/tcp-exporter:latest (sha256:94dc80bd667c6cad4e89e1ff4b31903447a98c63cb11ab2af9d098ae8a97db6b)...done
-$ docker push localhost:5000/jhcook/tcp-exporter:latest
+unpacking localhost:${DOCKER_REG_PORT}/boutique/tcp-exporter:latest (sha256:94dc80bd667c6cad4e89e1ff4b31903447a98c63cb11ab2af9d098ae8a97db6b)...done
+$ docker push localhost:${DOCKER_REG_PORT}/boutique/tcp-exporter:latest
 INFO[0000] pushing as a reduced-platform image (application/vnd.docker.distribution.manifest
 ...
 elapsed: 6.2 s                                                                    total:  20.0 M (3.2 MiB/s) 
-$ docker push localhost:5000/jhcook/tcp-exporter
+$ docker push localhost:${DOCKER_REG_PORT}/boutique/tcp-exporter
 ...
 ```
 
@@ -87,7 +88,7 @@ spec:
     spec:
       containers:
       - name: tcp-exporter
-        image: localhost:5000/jhcook/tcp-exporter:latest
+        image: localhost:${DOCKER_REG_PORT}/boutique/tcp-exporter:latest
         imagePullPolicy: IfNotPresent
         securityContext:
           capabilities:
