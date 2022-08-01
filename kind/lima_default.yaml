@@ -1,0 +1,120 @@
+# ===================================================================== #
+# Docker on 0.0.0.0:2375
+# ===================================================================== #
+
+arch: null
+images:
+- location: "https://cloud-images.ubuntu.com/releases/22.04/release-20220712/ubuntu-22.04-server-cloudimg-amd64.img"
+  arch: "x86_64"
+  digest: "sha256:86481acb9dbd62e3e93b49eb19a40c66c8aa07f07eff10af20ddf355a317e29f"
+- location: "https://cloud-images.ubuntu.com/releases/22.04/release-20220712/ubuntu-22.04-server-cloudimg-arm64.img"
+  arch: "aarch64"
+  digest: "sha256:e1ce033239f0038dca5ef09e582762ba0d0dfdedc1d329bc51bb0e9f5057af9d"
+- location: "https://cloud-images.ubuntu.com/releases/22.04/release/ubuntu-22.04-server-cloudimg-amd64.img"
+  arch: "x86_64"
+- location: "https://cloud-images.ubuntu.com/releases/22.04/release/ubuntu-22.04-server-cloudimg-arm64.img"
+  arch: "aarch64"
+
+cpus: null
+memory: null
+disk: null
+
+mounts:
+- location: "~"
+  mountPoint: null
+  writable: null
+  sshfs:
+    cache: null
+    followSymlinks: null
+    sftpDriver: null
+  9p:
+    securityModel: null
+    protocolVersion: null
+    msize: null
+    cache: null
+- location: "/tmp/lima"
+  writable: true
+
+mountType: null
+
+ssh:
+  localPort: 0
+  loadDotSSHPubKeys: null
+  forwardAgent: null
+  forwardX11: null
+  forwardX11Trusted: null
+
+caCerts:
+  removeDefaults: null
+  files:
+  certs:
+  
+containerd:
+  system: null
+  user: null
+
+provision:
+- mode: system
+  script: |
+    #!/bin/bash
+    set -eux -o pipefail
+    export DEBIAN_FRONTEND=noninteractive
+    apt install -y docker.io
+    if ! grep '\-H tcp://0.0.0.0:2375' /usr/lib/systemd/system/docker.service ; then
+      sed -r -i 's|(ExecStart=/usr/bin/dockerd\ )(.*)|\1-H tcp://0.0.0.0:2375 \2|g' /usr/lib/systemd/system/docker.service
+    fi
+    systemctl daemon-reload
+    systemctl restart docker
+# - mode: user
+#   script: |
+#     #!/bin/bash
+#     set -eux -o pipefail
+#     cat <<EOF > /usr/lib/systemd/system/docker.service
+#     EOF
+
+probes:
+- mode: readiness
+  description: Docker listening
+  script: |
+     #!/bin/bash
+     set -eux -o pipefail
+     if ! timeout 60s bash -c "until [ $(ss -Hl | awk '$5 == "*:2375"{print$2}') = "LISTEN" ]; do sleep 3; done"; then
+       echo >&2 "Docker is not listening"
+       exit 1
+     fi
+  hint: |
+    Docker is not listening on tcp://0.0.0.0:2375
+
+cpuType:
+  aarch64: null
+  x86_64: null
+
+firmware:
+  legacyBIOS: null
+
+video:
+  display: null
+
+networks:
+
+propagateProxyEnv: null
+
+hostResolver:
+  enabled: null
+  ipv6: null
+  hosts:
+    # guest.name: 127.1.1.1
+    # host.name: host.lima.internal
+# dns:
+# - 1.1.1.1
+# - 1.0.0.1
+
+# ===================================================================== #
+# GLOBAL DEFAULTS AND OVERRIDES
+# ===================================================================== #
+
+
+
+# ===================================================================== #
+# END OF TEMPLATE
+# ===================================================================== #
