@@ -27,46 +27,42 @@ set -o errexit
 # shellcheck source=/dev/null
 . env.sh
 
-# Start limactl default
-limactl start default
-
-if ! curl --connect-timeout 3 http://$(minikube ip):5000/v2/_catalog &>/dev/null
+# Start limactl default. For some reason if name is already running it exits
+# nonzero ....
+if [ "$(limactl ls lima_default -f '{{.Status}}')" == "Stopped" ]
 then
-  # Start the docker registry and for to Minikube
-  lima nerdctl run --rm -it --network=host alpine ash -c \
-  "apk add socat && socat TCP-LISTEN:5000,reuseaddr,fork TCP:$(minikube ip):5000" &
+  limactl start default
+elif [ "$(limactl ls lima_default -f '{{.Status}}')" == "Running" ]
+then
+  :
+else
+  limactl start --tty=false ./kind/lima_default.yaml
+fi
+
+export LIMA_INSTANCE="lima_default"
+docker context create lima-docker --docker \
+  "host=unix://$HOME/.lima/docker/sock/docker.sock" || /usr/bin/true
+docker context use lima-docker || /usr/bin/true
+export DOCKER_HOST="tcp://localhost:2375"
+
+if ! curl --connect-timeout 3 http://localhost:"${DOCKER_REG_PORT}"/v2/_catalog &>/dev/null
+then
+  # Forward port to the docker registry on Minikube
+  printf "registry: localhost: not found: forwarding\n"
+  docker run -d --network=host alpine ash -c \
+  "apk add socat && socat TCP-LISTEN:${DOCKER_REG_PORT},reuseaddr,fork TCP:$(minikube ip):5000"
 fi
 
 num_try=0
 while [ $num_try -le 20 ]
 do
-  if ! curl --connect-timeout 3 http://$(minikube ip):5000/v2/_catalog &>/dev/null
+  if ! curl --connect-timeout 3 http://localhost:"${DOCKER_REG_PORT}"/v2/_catalog &>/dev/null
   then
+    printf "registry: waiting on localhost:%s\n" "${DOCKER_REG_PORT}"
     num_try=$((num_try+1))
     sleep 5
   else
+    printf "registry: localhost:%s} found\n" "${DOCKER_REG_PORT}"
     break
-  fi
-done
-
-# Check availability of the required Docker images. If not available, build and
-# push to the local registry. If the registry is not available, exit on error.
-NIMAGES=(localhost:5000/jhcook/conntrack-network-init \
-         localhost:5000/jhcook/tcp-exporter)
-declare -a FIMAGES
-
-while IFS='' read -r line 
-do 
-  FIMAGES+=("${line}")
-done < <(lima nerdctl images | grep localhost:5000/jhcook | awk '{print$1}')
-
-for image in "${NIMAGES[@]}"
-do
-  if ! printf '%s' "${FIMAGES[@]}" | grep "${image}" &>/dev/null
-  then
-    cd "./hpa/sidecar/${image##*/}" || exit
-    lima nerdctl build -t "${image}" .
-    lima nerdctl push "${image}"
-    cd "${OLDPWD}" || exit
   fi
 done
