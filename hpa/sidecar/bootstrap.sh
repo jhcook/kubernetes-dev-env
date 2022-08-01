@@ -27,11 +27,11 @@ set -o errexit
 # shellcheck source=/dev/null
 . env.sh
 
-# Start limactl default. For some reason if name is already running it exits
+# Start lima_default. For some reason if name is already running it exits
 # nonzero ....
 if [ "$(limactl ls lima_default -f '{{.Status}}')" == "Stopped" ]
 then
-  limactl start default
+  limactl start lima_default
 elif [ "$(limactl ls lima_default -f '{{.Status}}')" == "Running" ]
 then
   :
