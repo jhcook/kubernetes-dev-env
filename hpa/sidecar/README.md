@@ -17,3 +17,10 @@ the image name for successful automatic build.
 This code supports macOS. Support for other platforms is encouraged by PR. As
 such, by default, macOS users will need to disable AirPlay Receiver in System
 Preferences > Sharing since it collides with tcp:5000 which is used by default.
+
+If you experience issues with `bootstrap.sh` such as
+`proxy: unknown scheme: http`, unset proxy environment variables.
+
+```
+$ unset $(compgen -e | awk 'tolower($1)~/proxy/{printf"%s ",$1}')
+```
