@@ -22,7 +22,7 @@
 #
 #
 
-set -o errexit
+set -o errexit nounset
 
 # shellcheck source=/dev/null
 . env.sh
