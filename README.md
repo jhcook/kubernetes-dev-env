@@ -1,5 +1,7 @@
 # Kubernetes Development Environment
 
+[![Contributor Covenant](https://img.shields.io/badge/Contributor%20Covenant-2.1-4baaaa.svg)](code_of_conduct.md)
+
 The Kubernetes Development Environment is a full-featured environment rendering
 the full stack for a feature rich experience. 
 
