@@ -1,0 +1,21 @@
+apiVersion: build.openshift.io/v1
+kind: BuildConfig
+metadata:
+  name: tcp-exporter-image
+  labels:
+    app: tcp-exporter-image
+spec:
+  source:
+    type: Git
+    git:
+      uri: "https://github.com/jhcook/kubernetes-dev-env.git"
+      ref: "devel"
+    contextDir: "hpa/sidecar/tcp-exporter"
+  strategy:
+    type: Docker
+    dockerStrategy:
+      dockerfilePath: Dockerfile
+  output:
+    to:
+      kind: ImageStreamTag
+      name: tcp-exporter:latest
