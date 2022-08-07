@@ -54,4 +54,10 @@ fi >/dev/null 2>&1
 export DOCKER_REG_PORT="5000"
 
 # Where is Docker available?
+# OpenShift Local
+#eval $(crc podman-env)
+# User configured host / proxy
 export DOCKER_HOST="tcp://localhost:2375"
+
+# Ignore Docker configuration herein, e.g., use integrated registry
+export IGNORE_DOCKER_CONFIG=false
