@@ -1,5 +1,10 @@
 kind: ImageStream
 apiVersion: image.openshift.io/v1
 metadata:
+  annotations:
+    openshift.io/display-name: conntrack-network-init
   name: conntrack-network-init
-spec: {}
+  namespace: default
+spec:
+  lookupPolicy:
+    local: true
