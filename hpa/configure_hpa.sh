@@ -30,10 +30,18 @@
 #
 # Author: Justin Cook
 
-set -o errexit
+set -o errexit nounset
 
 # shellcheck source=/dev/null
 . env.sh
+
+# Configure Docker image to use appropriate image name
+if ! ${IGNORE_DOCKER_CONFIG}
+then
+  IMAGE_REGISTRY="localhost:${DOCKER_REG_PORT}/boutique/"
+else
+  IMAGE_REGISTRY=""
+fi
 
 # Add the Keda Helm chart repository
 helm repo add kedacore https://kedacore.github.io/charts
@@ -59,17 +67,17 @@ kubectl apply -f hpa/frontend-ingress.yaml
 # Prometheus. Patch the cooresponding service to include said endpoint
 # then follow up by creating a ServiceMonitor. Give yourself a pat on the back,
 # Prometheus is now collecting metrics from your clever exporter.
-for deploy in $(kubectl get deploy -n default -o name | grep -E 'service$')
+for deploy in $(kubectl get deploy -n "${PROJECT_NAMESPACE}" -o name | grep -E 'service$')
 do
   # shellcheck disable=SC2086
-  SVCPORT="$(kubectl get svc ${deploy#*/} -n default -o \
+  SVCPORT="$(kubectl get svc ${deploy#*/} -n ${PROJECT_NAMESPACE} -o \
              jsonpath='{.spec.ports[-1].port}' 2>/dev/null)" || continue
   
   printf "Patching service %s with TCP %s\n" "${deploy#*/}" "${SVCPORT}"
-  kubectl patch svc "${deploy#*/}" -n default \
+  kubectl patch svc "${deploy#*/}" -n "${PROJECT_NAMESPACE}" \
   -p='{"spec": {"type": "ClusterIP","ports": [{"name": "prometheus","port": 9100,"protocol": "TCP","targetPort": 9100}]}}'
 
-  kubectl patch svc "${deploy#*/}" -n default \
+  kubectl patch svc "${deploy#*/}" -n "${PROJECT_NAMESPACE}" \
   -p="{\"metadata\": {\"labels\": {\"k8s-app\": \"${deploy#*/}\"}}}"
 
   printf "Patching %s\n" "${deploy}"
@@ -77,7 +85,7 @@ do
   # Create a JSON patch for the tcp-exporter container
   TEPATCH=$(yq -o json -I0 <<-EOF
 name: tcp-exporter
-image: localhost:${DOCKER_REG_PORT}/boutique/tcp-exporter:latest
+image: "${IMAGE_REGISTRY}tcp-exporter:latest"
 imagePullPolicy: Always
 securityContext:
   capabilities:
@@ -92,7 +100,7 @@ EOF
   # Create a JSON patch for the conntrack init container
   CIPATCH=$(yq -o json -I0 <<-EOF
 name: init-networking
-image: localhost:${DOCKER_REG_PORT}/boutique/conntrack-network-init:latest
+image: "${IMAGE_REGISTRY}conntrack-network-init:latest"
 resources: {}
 terminationMessagePath: /dev/termination-log
 terminationMessagePolicy: File
@@ -107,7 +115,7 @@ EOF
 
   # Apply the tcp-exporter and init container patches and enable shared process
   # namespace
-  kubectl get "${deploy}" -n default -o json | \
+  kubectl get "${deploy}" -n "${PROJECT_NAMESPACE}" -o json | \
     jq ".spec.template.spec.containers[1] = ${TEPATCH}" | \
     jq ".spec.template.spec.initContainers[0] = ${CIPATCH}" | \
     jq '.spec.template.spec.shareProcessNamespace = true' | \
@@ -119,14 +127,14 @@ apiVersion: monitoring.coreos.com/v1
 kind: ServiceMonitor
 metadata:
   name: boutique-${deploy#*/}-prometheus-config
-  namespace: cattle-monitoring-system
+  namespace: ${PROMETHEUS_NS}
 spec:
   selector:
     matchLabels:
       k8s-app: "${deploy#*/}"
   namespaceSelector:
     matchNames:
-    - default
+    - "${PROJECT_NAMESPACE}"
   endpoints:
   - path: /metrics
     port: prometheus
@@ -135,15 +143,15 @@ EOF
 done
 
 # Create the ScaledObject(s)
-PROMHOST=$(kubectl get svc rancher-monitoring-prometheus -n \
-           cattle-monitoring-system -o jsonpath='{.spec.clusterIP}')
+PROMHOST=$(kubectl get svc "${PROMETHEUS_SVC}" -n \
+           "${PROMETHEUS_NS}" -o jsonpath='{.spec.clusterIP}')
 
 kubectl apply -f - <<EOF
 apiVersion: keda.sh/v1alpha1
 kind: ScaledObject
 metadata:
   name: recommendationservice-scale
-  namespace: default
+  namespace: "${PROJECT_NAMESPACE}"
 spec:
   scaleTargetRef:
     kind: Deployment
@@ -167,7 +175,7 @@ apiVersion: keda.sh/v1alpha1
 kind: ScaledObject
 metadata:
   name: currencyservice-scale
-  namespace: default
+  namespace: "${PROJECT_NAMESPACE}"
 spec:
   scaleTargetRef:
     kind: Deployment
@@ -191,7 +199,7 @@ apiVersion: keda.sh/v1alpha1
 kind: ScaledObject
 metadata:
   name: productcatalogservice-scale
-  namespace: default
+  namespace: "${PROJECT_NAMESPACE}"
 spec:
   scaleTargetRef:
     kind: Deployment
@@ -215,7 +223,7 @@ apiVersion: keda.sh/v1alpha1
 kind: ScaledObject
 metadata:
   name: cartservice-scale
-  namespace: default
+  namespace: "${PROJECT_NAMESPACE}"
 spec:
   scaleTargetRef:
     kind: Deployment
@@ -239,7 +247,7 @@ apiVersion: keda.sh/v1alpha1
 kind: ScaledObject
 metadata:
   name: frontend-scale
-  namespace: default
+  namespace: "${PROJECT_NAMESPACE}"
 spec:
   scaleTargetRef:
     kind: Deployment
