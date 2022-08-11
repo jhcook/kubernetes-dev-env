@@ -25,6 +25,8 @@
 #
 # Author: Justin Cook
 
+set -o errexit
+
 # shellcheck source=/dev/null
 . env.sh
 
