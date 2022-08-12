@@ -61,7 +61,7 @@ do
 done
 
 # Create an Ingress for the Boutique®
-kubectl apply -f hpa/frontend-ingress.yaml
+kubectl apply -f hpa/frontend-ingress.yaml -n "${PROJECT_NAMESPACE}"
 
 # Patch each deployment with custom exporter to make metrics available via
 # Prometheus. Patch the cooresponding service to include said endpoint
