@@ -149,6 +149,7 @@ set_docker_env() {
   else
     export DOCKER_HOST="tcp://localhost:2375"
     export DOCKER_REG_PORT="5000"
+    export IGNORE_DOCKER_CONFIG=false
   fi
 }
 
