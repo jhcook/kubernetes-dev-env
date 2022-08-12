@@ -25,7 +25,6 @@
 # Author: Justin Cook
 
 set -o errexit nounset
-set -x
 
 # shellcheck source=/dev/null
 . env.sh
