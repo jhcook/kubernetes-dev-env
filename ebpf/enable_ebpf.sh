@@ -25,8 +25,6 @@
 #
 # Author: Justin Cook
 
-set -x
-
 # shellcheck source=/dev/null
 . env.sh
 
