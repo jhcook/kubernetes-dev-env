@@ -25,26 +25,40 @@
 #
 # Author: Justin Cook
 
-set -o errexit
+set -o errexit nounset
 
 # shellcheck source=/dev/null
 . env.sh
 
 trap "exit" INT
 
-# Configure Minikube
-bash setup_k8s.sh
-
-# Install Calico
-bash install_calico.sh
-
-# Install Rancher
-bash install_rancher.sh
-
-# Install and configure Prometheus metrics / Grafana dashboards
-bash install_monitoring.sh
-bash monitoring/configure_prometheus.sh
-bash monitoring/configure_grafana_dashboards.sh
+if [ "${RUNTIME}" = "minikube" ]
+then
+  # Setup Minikube
+  bash setup_k8s.sh
+  # Install Calico
+  bash install_calico.sh
+  # Install Rancher
+  bash install_rancher.sh
+  # Install and configure Prometheus metrics / Grafana dashboards
+  bash install_monitoring.sh
+  bash monitoring/configure_prometheus.sh
+  bash monitoring/configure_grafana_dashboards.sh
+elif [ "${RUNTIME}" = crc ]
+then
+  # Setup OpenShift Local
+  bash ocp/setup_ocp.sh
+else
+  >&2 echo "unknown runtime: ${RUNTIME}"
+  exit 1
+fi
 
 # Install boutique
 bash install_boutique.sh
+
+if [ "${RUNTIME}" = "crc" ]
+then
+  oc delete svc frontend-external
+  oc expose svc frontend
+  echo "Ensure http://frontend-boutique.apps-crc.testing resolves to $(crc ip)"
+fi
