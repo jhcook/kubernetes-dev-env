@@ -27,7 +27,6 @@
 # Author: Justin Cook
 
 set -o errexit nounset
-set -x
 
 # shellcheck source=/dev/null
 . env.sh
@@ -53,12 +52,18 @@ then
   crc config set no-proxy "${no_proxy}"
 fi
 
+if [ -f "cert.pem" ]
+then
+  crc config set proxy-ca-file cert.pem
+fi
+
 crc start
 
-# Create the namspace
-oc new-project "${PROJECT_NAMESPACE}" \
-  --description="This is the Google Boutique microservices demo" \
-  --display-name="Online Boutique"
+#shellcheck disable=SC2046
+eval $(crc oc-env)
+
+#shellcheck disable=SC2046
+eval $(crc console --credentials | grep kubeadmin | awk -F"'" '{print $2}')
 
 # Enable cluster monitoring of user namespaces
 kubectl apply -f ocp/cluster-monitoring-config.yaml
@@ -89,4 +94,3 @@ __EOF__
 
 #${SSH_COM} "sudo systemctl restart crio"
 #${SSH_COM} "sudo systemctl restart kubelet"
-:
