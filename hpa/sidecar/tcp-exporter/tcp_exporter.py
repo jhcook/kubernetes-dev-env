@@ -111,7 +111,7 @@ def conntrack_events(num_connections):
             if connection: 
                 num_connections.inc()
     except (CalledProcessError, FileNotFoundError) as err:
-        print(err)
+        print(err, file=stderr)
         state = 'stopped'
         exit(1)
 
@@ -121,7 +121,7 @@ def get_conns(discover_conns):
     queue for sorting and counting.
     """
     global watch_port, state
-    print("get_conns: starting")
+    print("get_conns: starting", file=stderr)
     while True:
         try:
             if state != 'running': break
@@ -148,7 +148,7 @@ def get_conns(discover_conns):
 
 def count_conns(existing_conns, discover_conns, num_connections):
     global state
-    print("count_conns: starting")
+    print("count_conns: starting", file=stderr)
     while True:
         if state != 'running': break
         conns_lock.acquire()
@@ -203,12 +203,14 @@ def main():
 
     # If state is 'stopped' then back off and try sampling
     if state != 'running':
+        print("Unable to track connections. Entering sampling mode.",
+              file=stderr)
         port_discover.join()
         state = 'running'
         # Create a thread that will scrape existing tcp connections and place
         # matching connections on a queue for counting.
         port_discover = Thread(name='port-discover-daemon', 
-                               target=get_conns, args=(discover_conns))
+                               target=get_conns, args=(discover_conns,))
         port_discover.daemon = True
         port_discover.start()
         threads.append(port_discover)
@@ -227,7 +229,8 @@ def main():
     try:
         TCPServer.allow_reuse_address = True
         with TCPServer(("", listen_port), handler) as httpd:
-            print("Server started at localhost: {}".format(listen_port))
+            print("Server started at localhost: {}".format(listen_port),
+                  file=stderr)
             try:
                 httpd.serve_forever()
             except Exception as err:
@@ -236,7 +239,7 @@ def main():
                 httpd.server_close()
                 httpd.shutdown()
     except OSError as err:
-        print(err)
+        print(err, file=stderr)
         exit(4)
 
     [thread.join() for thread in threads]
