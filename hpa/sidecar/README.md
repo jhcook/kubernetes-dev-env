@@ -12,6 +12,12 @@ The `builder.sh` script is used to iterate through the images in the registry
 and build those missing. The directories in this folder should be named after
 the image name for successful automatic build.
 
+## TODO
+
+Migrate from legacy iptables to nf_tables.
+* https://gitlab.alpinelinux.org/alpine/aports/-/issues/14058
+* https://wiki.nftables.org/wiki-nftables/index.php/Moving_from_iptables_to_nftables
+
 ## Warning
 
 This code supports macOS. Support for other platforms is encouraged by PR. As

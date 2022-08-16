@@ -31,8 +31,12 @@ Finally, pop an initcontainer stanza in the workload like so:
             capabilities:
               add:
                 - NET_ADMIN
+                - NET_RAW
+                - DAC_READ_SEARCH
+                - DAC_OVERRIDE
             privileged: true
 ```
 
 ## Resources
 * https://venilnoronha.io/hand-crafting-a-sidecar-proxy-and-demystifying-istio
+* https://linux.die.net/man/7/capabilities

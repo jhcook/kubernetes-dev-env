@@ -1,0 +1,6 @@
+FROM registry.access.redhat.com/ubi8 
+
+#RUN setcap CAP_NET_ADMIN,CAP_NET_RAW,CAP_DAC_READ_SEARCH,CAP_DAC_OVERRIDE=+ep "$(readlink -f `which iptables`)"
+
+ENTRYPOINT ["nft", "add", "rule", "ipfilter", "INPUT", "ct", "state", \
+            "established"]

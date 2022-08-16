@@ -102,3 +102,7 @@ EOF
 ```
 For more information, and an example used with Keda for scaling, please see
 `hpa/configure_hpa.sh` in this repository.
+
+## References
+
+* https://linux.die.net/man/7/capabilities
