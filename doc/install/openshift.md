@@ -9,6 +9,12 @@ environment variables, e.g., `unset $(compgen -e | grep -i proxy)`.
 
 2. [Setup and start OpenShift Local](https://access.redhat.com/documentation/en-us/red_hat_openshift_local/2.5/html/getting_started_guide/using_gsg)
 
+## Quickstart
+
+Please have a look at [`setup_ocp.sh`](../../ocp/setup_ocp.sh). You once
+OpenShift Local is installed, you my `bash ./ocp/setup_ocp.sh` and the single-
+node cluster will be running locally.
+
 ```
 $ crc setup
 ...
@@ -20,6 +26,12 @@ $ crc config set enable-cluster-monitoring true
 Successfully configured enable-cluster-monitoring to true
 $ crc start
 ...
+```
+
+After running, you will need to add `oc` to PATH and update the environment
+with the Podman data.
+
+```
 $ eval $(crc oc-env)
 $ eval $(crc podman-env)
 ```
@@ -28,7 +40,15 @@ $ eval $(crc podman-env)
 
 Cluster monitoring is disabled by default in OpenShift Local. To enable, 
 `crc config set enable-cluster-monitoring true` must be configured prior to
-starting the instance.
+starting the instance. [`setup_ocp.sh`](../../ocp/setup_ocp.sh) does this.
+
+Enable user workload monitoring, and set reasonable values for a development
+environment.
+
+```
+$ kubectl apply -f ./ocp/cluster-monitoring-config.yaml 
+configmap/cluster-monitoring-config created
+```
 
 ## References
 

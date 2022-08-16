@@ -16,6 +16,13 @@ based on connection rate. This can be found in `hpa` directory.
 The stack provides the latest Rancher release (2.6.5) and Calico with an option
 for Calico Enterprise (3.13) -- for those with appropriate credentials.
 
+## Kubernetes Support
+
+The reference is tested on Minikube and should work with upstream Kubernetes.
+Support for other platforms are managed in the root and module subdirectories
+with `<distribution_name>` as the directory name. For instance, OpenShift is
+represented as `./ocp` and e.g., `hpa/ocp` throughout the project.
+
 ## Up and Running
 
 The following instructions have been wrapped and provided in `quickstart.sh`.

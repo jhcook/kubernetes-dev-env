@@ -19,7 +19,33 @@ subdirectory.
 
 ## Installation
 
-Execute `configure_hpa.sh` script in this directory. It will install Keda,
+Execute `configure_hpa.sh` script in this directory. It will install Keda and
+create a frontend at http://boutique.test.
+
+Next, the sidecar and init containers need to be built and made available. The
+[method will vary based on platform](https://minikube.sigs.k8s.io/docs/handbook/pushing/). For macOS, please use [the code in
+this project](./sidecar/bootstrap.sh) to prepare and make available.
+Finally, patch the relevant deployments to use the containers and create
+ServiceMonitors for each.
+
+```
+$ bash hpa/sidecar/bootstrap.sh
+...
+$ bash hpa/sidecar/builder.sh
+...
+$ bash hpa/install_sidecar_init.sh
+...
+```
+
+At this point, the pods are publishing metrics being scraped by Prometheus.
+The last big is creating ScaledObjects Keda will use to modify workloads
+accordingly.
+
+```
+$ bash hpa/install_scaled_objects.sh
+...
+```
+
 create sidecar and an init container, modify the mock application (Boutique)
 with Locust for load testing. Upon successful execution, it will print
 instructions and make the Boutique available as `http://boutique.test`.
