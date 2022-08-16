@@ -1,9 +1,7 @@
-FROM python:3.9-alpine
+FROM registry.access.redhat.com/ubi8/python-39
 
-RUN apk add --no-cache \
-        conntrack-tools \
-        libcap \
-        curl && \
+RUN yum install -y conntrack-tools libcap && \
+    yum clean all && \
     setcap CAP_NET_BIND_SERVICE=+eip "$(readlink -f `which python3`)" && \
     setcap CAP_NET_ADMIN=+eip "$(readlink -f `which conntrack`)"
 
