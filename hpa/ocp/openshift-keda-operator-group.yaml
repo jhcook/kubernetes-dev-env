@@ -1,0 +1,8 @@
+apiVersion: operators.coreos.com/v1
+kind: OperatorGroup
+metadata:
+  annotations:
+    olm.providedAPIs: ClusterTriggerAuthentication.v1alpha1.keda.sh,KedaController.v1alpha1.keda.sh,ScaledJob.v1alpha1.keda.sh,ScaledObject.v1alpha1.keda.sh,TriggerAuthentication.v1alpha1.keda.sh
+  name: openshift-keda-og
+  namespace: openshift-keda
+spec: {}

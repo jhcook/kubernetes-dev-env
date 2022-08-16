@@ -1,0 +1,758 @@
+apiVersion: operators.coreos.com/v1alpha1
+kind: ClusterServiceVersion
+metadata:
+  annotations:
+    operators.operatorframework.io/builder: operator-sdk-v1.16.0
+    operators.operatorframework.io/project_layout: go.kubebuilder.io/v3
+    certified: 'false'
+    olm.targetNamespaces: ''
+    operatorframework.io/properties: >-
+      {"properties":[{"type":"olm.gvk","value":{"group":"keda.sh","kind":"ScaledJob","version":"v1alpha1"}},{"type":"olm.gvk","value":{"group":"keda.sh","kind":"ScaledObject","version":"v1alpha1"}},{"type":"olm.gvk","value":{"group":"keda.sh","kind":"TriggerAuthentication","version":"v1alpha1"}},{"type":"olm.gvk","value":{"group":"keda.sh","kind":"ClusterTriggerAuthentication","version":"v1alpha1"}},{"type":"olm.package","value":{"packageName":"openshift-custom-metrics-autoscaler-operator","version":"2.7.1"}},{"type":"olm.gvk","value":{"group":"keda.sh","kind":"KedaController","version":"v1alpha1"}}]}
+    repository: 'https://github.com/openshift/custom-metrics-autoscaler'
+    support: Red Hat
+    alm-examples: |-
+      [
+        {
+          "apiVersion": "keda.sh/v1alpha1",
+          "kind": "KedaController",
+          "metadata": {
+            "name": "keda",
+            "namespace": "openshift-keda"
+          },
+          "spec": {
+            "watchNamespace": "",
+            "operator": {
+              "logLevel": "info",
+              "logEncoder": "console"
+            },
+            "metricsServer": {
+              "logLevel": "0"
+            },
+            "serviceAccount": {}
+          }
+        },
+        {
+          "apiVersion": "keda.sh/v1alpha1",
+          "kind": "ScaledJob",
+          "metadata": {
+            "name": "scaledjob-sample"
+          },
+          "spec": {
+            "failedJobsHistoryLimit": 5,
+            "jobTargetRef": {
+              "activeDeadlineSeconds": 600,
+              "backoffLimit": 6,
+              "completions": 1,
+              "parallelism": 1,
+              "template": null
+            },
+            "maxReplicaCount": 100,
+            "pollingInterval": 30,
+            "successfulJobsHistoryLimit": 5,
+            "triggers": [
+              {
+                "metadata": {
+                  "property": "example-property"
+                },
+                "type": "example-trigger"
+              }
+            ]
+          }
+        },
+        {
+          "apiVersion": "keda.sh/v1alpha1",
+          "kind": "ScaledObject",
+          "metadata": {
+            "name": "example-scaledobject"
+          },
+          "spec": {
+            "cooldownPeriod": 300,
+            "maxReplicaCount": 100,
+            "minReplicaCount": 0,
+            "pollingInterval": 30,
+            "scaleTargetRef": {
+              "name": "example-deployment"
+            },
+            "triggers": [
+              {
+                "metadata": {
+                  "property": "example-property"
+                },
+                "type": "example-trigger"
+              }
+            ]
+          }
+        },
+        {
+          "apiVersion": "keda.sh/v1alpha1",
+          "kind": "TriggerAuthentication",
+          "metadata": {
+            "name": "example-triggerauthentication"
+          },
+          "spec": {
+            "secretTargetRef": [
+              {
+                "key": "example-role-key",
+                "name": "example-secret-name",
+                "parameter": "exmaple-secret-parameter"
+              }
+            ]
+          }
+        },
+        {
+          "apiVersion": "keda.sh/v1alpha1",
+          "kind": "ClusterTriggerAuthentication",
+          "metadata": {
+            "name": "example-clustertriggerauthentication"
+          },
+          "spec": {
+            "secretTargetRef": [
+              {
+                "key": "example-role-key",
+                "name": "example-secret-name",
+                "parameter": "exmaple-secret-parameter"
+              }
+            ]
+          }
+        }
+      ]
+    capabilities: Seamless Upgrades
+    olm.operatorNamespace: openshift-keda
+    containerImage: >-
+      registry.redhat.io/custom-metrics-autoscaler-tech-preview/custom-metrics-autoscaler-rhel8-operator@sha256:cf66358f066306de39b26a26d52c0f51da0fdcd62ce3b2570740f5c787fa2067
+    categories: Cloud Provider
+    operatorframework.io/suggested-namespace: openshift-keda
+    description: >-
+      Custom Metrics Autoscaler Operator, an event-driven autoscaler based upon
+      KEDA
+    olm.operatorGroup: openshift-keda-f427g
+  name: custom-metrics-autoscaler.v2.7.1
+  managedFields:
+    - apiVersion: operators.coreos.com/v1alpha1
+      fieldsType: FieldsV1
+      fieldsV1:
+        'f:metadata':
+          'f:annotations':
+            'f:createdAt': {}
+            'f:alm-examples': {}
+            'f:description': {}
+            'f:capabilities': {}
+            .: {}
+            'f:containerImage': {}
+            'f:categories': {}
+            'f:operatorframework.io/suggested-namespace': {}
+            'f:operators.operatorframework.io/project_layout': {}
+            'f:certified': {}
+            'f:operatorframework.io/properties': {}
+            'f:operators.operatorframework.io/builder': {}
+            'f:support': {}
+            'f:repository': {}
+        'f:spec':
+          'f:version': {}
+          'f:maturity': {}
+          'f:provider':
+            .: {}
+            'f:name': {}
+          'f:links': {}
+          'f:install':
+            .: {}
+            'f:spec':
+              .: {}
+              'f:clusterPermissions': {}
+              'f:deployments': {}
+            'f:strategy': {}
+          'f:maintainers': {}
+          'f:description': {}
+          'f:installModes': {}
+          'f:minKubeVersion': {}
+          'f:icon': {}
+          'f:customresourcedefinitions':
+            .: {}
+            'f:owned': {}
+          .: {}
+          'f:relatedImages': {}
+          'f:cleanup':
+            .: {}
+            'f:enabled': {}
+          'f:apiservicedefinitions': {}
+          'f:selector': {}
+          'f:labels':
+            .: {}
+            'f:alm-owner-keda': {}
+            'f:operated-by': {}
+          'f:displayName': {}
+          'f:keywords': {}
+      manager: catalog
+      operation: Update
+      time: '2022-08-15T11:31:11Z'
+    - apiVersion: operators.coreos.com/v1alpha1
+      fieldsType: FieldsV1
+      fieldsV1:
+        'f:status':
+          'f:lastUpdateTime': {}
+          'f:requirementStatus': {}
+          'f:phase': {}
+          'f:lastTransitionTime': {}
+          'f:conditions': {}
+          .: {}
+          'f:cleanup': {}
+          'f:message': {}
+          'f:reason': {}
+      manager: olm
+      operation: Update
+      subresource: status
+      time: '2022-08-15T11:31:12Z'
+    - apiVersion: operators.coreos.com/v1alpha1
+      fieldsType: FieldsV1
+      fieldsV1:
+        'f:metadata':
+          'f:annotations':
+            'f:olm.operatorGroup': {}
+            'f:olm.operatorNamespace': {}
+            'f:olm.targetNamespaces': {}
+          'f:labels':
+            .: {}
+            'f:operators.coreos.com/openshift-custom-metrics-autoscaler-operator.openshift-keda': {}
+      manager: olm
+      operation: Update
+  namespace: openshift-keda
+  labels:
+    operators.coreos.com/openshift-custom-metrics-autoscaler-operator.openshift-keda: ''
+spec:
+  customresourcedefinitions:
+    owned:
+      - description: |
+          Represents an installation of a particular version of KEDA Controller.
+        displayName: KedaController
+        kind: KedaController
+        name: kedacontrollers.keda.sh
+        resources:
+          - kind: Deployment
+            name: ''
+            version: v1
+          - kind: Service
+            name: ''
+            version: v1
+          - kind: ReplicaSet
+            name: ''
+            version: v1
+          - kind: Pod
+            name: ''
+            version: v1
+          - kind: Secret
+            name: ''
+            version: v1
+          - kind: ConfigMap
+            name: ''
+            version: v1
+        specDescriptors:
+          - description: >-
+              Log Level for KEDA Operator, allowed values: 'debug', 'info',
+              'error', or an integer value greater than 0, specified as string
+            displayName: Log Level
+            path: operator.logLevel
+            x-descriptors:
+              - 'urn:alm:descriptor:com.tectonic.ui:text'
+          - description: >-
+              Log format for KEDA Operator, allowed values are 'json' and
+              'console'
+            displayName: Log Format
+            path: operator.logEncoder
+            x-descriptors:
+              - 'urn:alm:descriptor:com.tectonic.ui:text'
+          - description: >-
+              Log Level for KEDA Metrics Server, allowed values: "0" for info,
+              "4" for debug, or an integer value greater than 0, specified as
+              string
+            displayName: Log Level Metrics
+            path: metricsServer.logLevel
+            x-descriptors:
+              - 'urn:alm:descriptor:com.tectonic.ui:text'
+          - description: >-
+              Namespace that should the created KEDA controller watch, blank
+              means all namespaces
+            displayName: Watch Namespace
+            path: watchNamespace
+            x-descriptors:
+              - 'urn:alm:descriptor:com.tectonic.ui:text'
+        statusDescriptors:
+          - description: Phase
+            displayName: Phase
+            path: phase
+            x-descriptors:
+              - 'urn:alm:descriptor:io.kubernetes.phase'
+          - description: Reason
+            displayName: Reason
+            path: reason
+            x-descriptors:
+              - 'urn:alm:descriptor:io.kubernetes.phase:reason'
+          - description: Version
+            displayName: Version
+            path: version
+            x-descriptors:
+              - 'urn:alm:descriptor:text'
+        version: v1alpha1
+      - description: Defines how KEDA should scale your jobs and what the triggers
+        displayName: ScaledJob
+        kind: ScaledJob
+        name: scaledjobs.keda.sh
+        resources:
+          - kind: Job
+            name: ''
+            version: v1
+          - kind: Pod
+            name: ''
+            version: v1
+          - kind: Secret
+            name: ''
+            version: v1
+          - kind: ConfigMap
+            name: ''
+            version: v1
+        specDescriptors:
+          - description: Job Target Ref
+            displayName: Job Target Ref
+            path: jobTargetRef
+            x-descriptors:
+              - 'urn:alm:descriptor:com.tectonic.ui:text'
+          - description: Polling Interval
+            displayName: Polling Interval
+            path: pollingInterval
+            x-descriptors:
+              - 'urn:alm:descriptor:com.tectonic.ui:number'
+          - description: How many completed jobs should be kept
+            displayName: Successful Jobs History Limit
+            path: successfulJobsHistoryLimit
+            x-descriptors:
+              - 'urn:alm:descriptor:com.tectonic.ui:number'
+          - description: How many failed jobs should be kept
+            displayName: Failed Jobs History Limit
+            path: failedJobsHistoryLimit
+            x-descriptors:
+              - 'urn:alm:descriptor:com.tectonic.ui:number'
+          - description: Max Replica Count
+            displayName: Max Replica Count
+            path: maxReplicaCount
+            x-descriptors:
+              - 'urn:alm:descriptor:com.tectonic.ui:number'
+          - description: Rollout Strategy
+            displayName: Rollout Strategy
+            path: rolloutStrategy
+            x-descriptors:
+              - 'urn:alm:descriptor:com.tectonic.ui:text'
+          - description: Scaling Strategy
+            displayName: Scaling Strategy
+            path: scalingStrategy
+            x-descriptors:
+              - 'urn:alm:descriptor:com.tectonic.ui:text'
+        statusDescriptors:
+          - description: Last Active Time
+            displayName: Last Active Time
+            path: lastActiveTime
+            x-descriptors:
+              - 'urn:alm:descriptor:text'
+          - description: Conditions
+            displayName: Conditions
+            path: conditions
+            x-descriptors:
+              - 'urn:alm:descriptor:io.kubernetes.conditions'
+        version: v1alpha1
+      - description: >-
+          Defines how KEDA should scale your application and what the triggers
+          are
+        displayName: ScaledObject
+        kind: ScaledObject
+        name: scaledobjects.keda.sh
+        resources:
+          - kind: Deployment
+            name: ''
+            version: v1
+          - kind: Service
+            name: ''
+            version: v1
+          - kind: ReplicaSet
+            name: ''
+            version: v1
+          - kind: Pod
+            name: ''
+            version: v1
+          - kind: Secret
+            name: ''
+            version: v1
+          - kind: ConfigMap
+            name: ''
+            version: v1
+        specDescriptors:
+          - description: Cooldown Period
+            displayName: Cooldown Period
+            path: cooldownPeriod
+            x-descriptors:
+              - 'urn:alm:descriptor:com.tectonic.ui:number'
+          - description: Max Replica Count
+            displayName: Max Replica Count
+            path: maxReplicaCount
+            x-descriptors:
+              - 'urn:alm:descriptor:com.tectonic.ui:number'
+          - description: Min Replica Count
+            displayName: Min Replica Count
+            path: minReplicaCount
+            x-descriptors:
+              - 'urn:alm:descriptor:com.tectonic.ui:number'
+          - description: Idle Replica Count
+            displayName: Idle Replica Count
+            path: idleReplicaCount
+            x-descriptors:
+              - 'urn:alm:descriptor:com.tectonic.ui:number'
+          - description: Polling Interval
+            displayName: Polling Interval
+            path: pollingInterval
+            x-descriptors:
+              - 'urn:alm:descriptor:com.tectonic.ui:number'
+          - description: Scale Target Ref
+            displayName: Scale Target Ref
+            path: scaleTargetRef
+            x-descriptors:
+              - 'urn:alm:descriptor:com.tectonic.ui:text'
+          - description: Fallback Failure Threshold
+            displayName: Fallback Failure Threshold
+            path: fallback.failureThreshold
+            x-descriptors:
+              - 'urn:alm:descriptor:com.tectonic.ui:number'
+          - description: Fallback Replicas
+            displayName: Fallback Replicas
+            path: fallback.replicas
+            x-descriptors:
+              - 'urn:alm:descriptor:com.tectonic.ui:number'
+          - description: Triggers
+            displayName: Triggers
+            path: triggers
+            x-descriptors:
+              - 'urn:alm:descriptor:com.tectonic.ui:text'
+        statusDescriptors:
+          - description: ScaleTarget Kind
+            displayName: ScaleTarget Kind
+            path: scaleTargetKind
+            x-descriptors:
+              - 'urn:alm:descriptor:text'
+          - description: External Metric Names
+            displayName: External Metric Names
+            path: externalMetricNames
+            x-descriptors:
+              - 'urn:alm:descriptor:text'
+          - description: Resource Metric Names
+            displayName: Resource Metric Names
+            path: resourceMetricNames
+            x-descriptors:
+              - 'urn:alm:descriptor:text'
+          - description: Last Active Time
+            displayName: Last Active Time
+            path: lastActiveTime
+            x-descriptors:
+              - 'urn:alm:descriptor:text'
+          - description: Original Replica Count
+            displayName: Original Replica Count
+            path: originalReplicaCount
+            x-descriptors:
+              - 'urn:alm:descriptor:text'
+          - description: Paused Replica Count
+            displayName: Paused Replica Count
+            path: pausedReplicaCount
+            x-descriptors:
+              - 'urn:alm:descriptor:text'
+          - description: Conditions
+            displayName: Conditions
+            path: conditions
+            x-descriptors:
+              - 'urn:alm:descriptor:io.kubernetes.conditions'
+          - description: Health Status - Number of Failures
+            displayName: Number of Failures
+            path: health.numberOfFailures
+            x-descriptors:
+              - 'urn:alm:descriptor:text'
+          - description: Health Status
+            displayName: Health Status
+            path: health.status
+            x-descriptors:
+              - 'urn:alm:descriptor:text'
+        version: v1alpha1
+      - description: Describes authentication parameters
+        displayName: TriggerAuthentication
+        kind: TriggerAuthentication
+        name: triggerauthentications.keda.sh
+        resources:
+          - kind: Secret
+            name: ''
+            version: v1
+        specDescriptors:
+          - description: Env
+            displayName: Env
+            path: env
+            x-descriptors:
+              - 'urn:alm:descriptor:com.tectonic.ui:text'
+          - description: Pod Identity
+            displayName: Pod Identity
+            path: podIdentity
+            x-descriptors:
+              - 'urn:alm:descriptor:com.tectonic.ui:text'
+          - description: Secret Target Ref
+            displayName: Secret Target Ref
+            path: secretTargetRef
+            x-descriptors:
+              - 'urn:alm:descriptor:io.kubernetes:Secret'
+        version: v1alpha1
+      - description: Describes cluster wide authentication parameters
+        displayName: ClusterTriggerAuthentication
+        kind: ClusterTriggerAuthentication
+        name: clustertriggerauthentications.keda.sh
+        resources:
+          - kind: Secret
+            name: ''
+            version: v1
+        specDescriptors:
+          - description: Env
+            displayName: Env
+            path: env
+            x-descriptors:
+              - 'urn:alm:descriptor:com.tectonic.ui:text'
+          - description: Pod Identity
+            displayName: Pod Identity
+            path: podIdentity
+            x-descriptors:
+              - 'urn:alm:descriptor:com.tectonic.ui:text'
+          - description: Secret Target Ref
+            displayName: Secret Target Ref
+            path: secretTargetRef
+            x-descriptors:
+              - 'urn:alm:descriptor:io.kubernetes:Secret'
+        version: v1alpha1
+  relatedImages:
+    - image: >-
+        registry.redhat.io/custom-metrics-autoscaler-tech-preview/custom-metrics-autoscaler-rhel8-operator@sha256:cf66358f066306de39b26a26d52c0f51da0fdcd62ce3b2570740f5c787fa2067
+      name: >-
+        custom-metrics-autoscaler-rhel8-operator-cf66358f066306de39b26a26d52c0f51da0fdcd62ce3b2570740f5c787fa2067-annotation
+    - image: >-
+        registry.redhat.io/custom-metrics-autoscaler-tech-preview/custom-metrics-autoscaler-rhel8-operator@sha256:cf66358f066306de39b26a26d52c0f51da0fdcd62ce3b2570740f5c787fa2067
+      name: custom-metrics-autoscaler-operator
+    - image: >-
+        registry.redhat.io/custom-metrics-autoscaler-tech-preview/custom-metrics-autoscaler-rhel8@sha256:e8c3c6241dfe0c44cac8f1b7c1d11c8ff9429a9b7059ba8cfd3dfa6baf275b9b
+      name: '1'
+    - image: >-
+        registry.redhat.io/custom-metrics-autoscaler-tech-preview/custom-metrics-autoscaler-adapter-rhel8@sha256:4b2cee2c46fcc7712277853b50de7467c5c9667b285b11cb57f6ef3b2ce08241
+      name: '2'
+  cleanup:
+    enabled: false
+  apiservicedefinitions: {}
+  keywords:
+    - keda
+    - scaling
+    - event
+  displayName: Custom Metrics Autoscaler
+  provider:
+    name: Red Hat
+  maturity: alpha
+  installModes:
+    - supported: false
+      type: OwnNamespace
+    - supported: false
+      type: SingleNamespace
+    - supported: false
+      type: MultiNamespace
+    - supported: true
+      type: AllNamespaces
+  version: 2.7.1
+  icon:
+    - base64data: >-
+        PHN2ZyBpZD0iTGF5ZXJfMSIgZGF0YS1uYW1lPSJMYXllciAxIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxOTIgMTQ1Ij48ZGVmcz48c3R5bGU+LmNscy0xe2ZpbGw6I2UwMDt9PC9zdHlsZT48L2RlZnM+PHRpdGxlPlJlZEhhdC1Mb2dvLUhhdC1Db2xvcjwvdGl0bGU+PHBhdGggZD0iTTE1Ny43Nyw2Mi42MWExNCwxNCwwLDAsMSwuMzEsMy40MmMwLDE0Ljg4LTE4LjEsMTcuNDYtMzAuNjEsMTcuNDZDNzguODMsODMuNDksNDIuNTMsNTMuMjYsNDIuNTMsNDRhNi40Myw2LjQzLDAsMCwxLC4yMi0xLjk0bC0zLjY2LDkuMDZhMTguNDUsMTguNDUsMCwwLDAtMS41MSw3LjMzYzAsMTguMTEsNDEsNDUuNDgsODcuNzQsNDUuNDgsMjAuNjksMCwzNi40My03Ljc2LDM2LjQzLTIxLjc3LDAtMS4wOCwwLTEuOTQtMS43My0xMC4xM1oiLz48cGF0aCBjbGFzcz0iY2xzLTEiIGQ9Ik0xMjcuNDcsODMuNDljMTIuNTEsMCwzMC42MS0yLjU4LDMwLjYxLTE3LjQ2YTE0LDE0LDAsMCwwLS4zMS0zLjQybC03LjQ1LTMyLjM2Yy0xLjcyLTcuMTItMy4yMy0xMC4zNS0xNS43My0xNi42QzEyNC44OSw4LjY5LDEwMy43Ni41LDk3LjUxLjUsOTEuNjkuNSw5MCw4LDgzLjA2LDhjLTYuNjgsMC0xMS42NC01LjYtMTcuODktNS42LTYsMC05LjkxLDQuMDktMTIuOTMsMTIuNSwwLDAtOC40MSwyMy43Mi05LjQ5LDI3LjE2QTYuNDMsNi40MywwLDAsMCw0Mi41Myw0NGMwLDkuMjIsMzYuMywzOS40NSw4NC45NCwzOS40NU0xNjAsNzIuMDdjMS43Myw4LjE5LDEuNzMsOS4wNSwxLjczLDEwLjEzLDAsMTQtMTUuNzQsMjEuNzctMzYuNDMsMjEuNzdDNzguNTQsMTA0LDM3LjU4LDc2LjYsMzcuNTgsNTguNDlhMTguNDUsMTguNDUsMCwwLDEsMS41MS03LjMzQzIyLjI3LDUyLC41LDU1LC41LDc0LjIyYzAsMzEuNDgsNzQuNTksNzAuMjgsMTMzLjY1LDcwLjI4LDQ1LjI4LDAsNTYuNy0yMC40OCw1Ni43LTM2LjY1LDAtMTIuNzItMTEtMjcuMTYtMzAuODMtMzUuNzgiLz48L3N2Zz4=
+      mediatype: image/svg+xml
+  minKubeVersion: 1.17.0
+  links:
+    - name: Vertical Pod Autoscaler Documentation
+      url: 'https://docs.openshift.com/container-platform/latest/'
+  install:
+    spec:
+      clusterPermissions:
+        - rules:
+            - apiGroups:
+                - ''
+              resources:
+                - configmaps
+                - endpoints
+                - events
+                - namespaces
+                - persistentvolumeclaims
+                - pods
+                - secrets
+                - serviceaccounts
+                - services
+                - services/finalizers
+              verbs:
+                - '*'
+            - apiGroups:
+                - apiregistration.k8s.io
+              resources:
+                - apiservices
+              verbs:
+                - '*'
+            - apiGroups:
+                - apps
+              resources:
+                - daemonsets
+                - deployments
+                - replicasets
+                - statefulsets
+              verbs:
+                - '*'
+            - apiGroups:
+                - apps
+              resourceNames:
+                - custom-metrics-autoscaler-operator
+              resources:
+                - deployments/finalizers
+              verbs:
+                - '*'
+            - apiGroups:
+                - keda.sh
+              resources:
+                - kedacontrollers
+                - kedacontrollers/finalizers
+                - kedacontrollers/status
+              verbs:
+                - '*'
+            - apiGroups:
+                - coordination.k8s.io
+              resources:
+                - leases
+              verbs:
+                - '*'
+            - apiGroups:
+                - monitoring.coreos.com
+              resources:
+                - servicemonitors
+              verbs:
+                - create
+                - get
+            - apiGroups:
+                - rbac.authorization.k8s.io
+              resources:
+                - clusterrolebindings
+                - clusterroles
+                - rolebindings
+              verbs:
+                - '*'
+            - apiGroups:
+                - route.openshift.io
+              resources:
+                - routes
+              verbs:
+                - '*'
+                - list
+          serviceAccountName: custom-metrics-autoscaler-operator
+      deployments:
+        - name: custom-metrics-autoscaler-operator
+          spec:
+            replicas: 1
+            selector:
+              matchLabels:
+                app.kubernetes.io/part-of: custom-metrics-autoscaler-operator
+                name: custom-metrics-autoscaler-operator
+            strategy: {}
+            template:
+              metadata:
+                labels:
+                  app.kubernetes.io/part-of: custom-metrics-autoscaler-operator
+                  name: custom-metrics-autoscaler-operator
+              spec:
+                containers:
+                  - resources:
+                      limits:
+                        cpu: 500m
+                        memory: 500Mi
+                      requests:
+                        cpu: 100m
+                        memory: 100Mi
+                    readinessProbe:
+                      httpGet:
+                        path: /readyz
+                        port: 8081
+                      initialDelaySeconds: 20
+                    name: custom-metrics-autoscaler-operator
+                    command:
+                      - /usr/bin/bash
+                    livenessProbe:
+                      httpGet:
+                        path: /healthz
+                        port: 8081
+                      initialDelaySeconds: 25
+                    env:
+                      - name: RELATED_IMAGE_1
+                        value: >-
+                          registry.redhat.io/custom-metrics-autoscaler-tech-preview/custom-metrics-autoscaler-rhel8@sha256:e8c3c6241dfe0c44cac8f1b7c1d11c8ff9429a9b7059ba8cfd3dfa6baf275b9b
+                      - name: RELATED_IMAGE_2
+                        value: >-
+                          registry.redhat.io/custom-metrics-autoscaler-tech-preview/custom-metrics-autoscaler-adapter-rhel8@sha256:4b2cee2c46fcc7712277853b50de7467c5c9667b285b11cb57f6ef3b2ce08241
+                      - name: WATCH_NAMESPACE
+                        valueFrom:
+                          fieldRef:
+                            fieldPath: 'metadata.annotations[''olm.targetNamespaces'']'
+                    securityContext:
+                      allowPrivilegeEscalation: false
+                      capabilities:
+                        drop:
+                          - ALL
+                    imagePullPolicy: Always
+                    image: >-
+                      registry.redhat.io/custom-metrics-autoscaler-tech-preview/custom-metrics-autoscaler-rhel8-operator@sha256:cf66358f066306de39b26a26d52c0f51da0fdcd62ce3b2570740f5c787fa2067
+                    args:
+                      - '-c'
+                      - >-
+                        export KEDA_OPERATOR_IMAGE=$RELATED_IMAGE_1; export
+                        KEDA_METRICS_SERVER_IMAGE=$RELATED_IMAGE_2; exec
+                        /manager "$0" "$@"
+                      - '--leader-elect'
+                      - '--zap-log-level=info'
+                      - '--zap-encoder=console'
+                      - '--zap-time-encoding=rfc3339'
+                securityContext:
+                  runAsNonRoot: true
+                serviceAccountName: custom-metrics-autoscaler-operator
+    strategy: deployment
+  maintainers:
+    - email: support@redhat.com
+      name: Red Hat
+  description: >
+    ## About the managed application
+
+    Custom Metrics Autoscaler for OpenShift is an event driven autoscaler based
+    upon KEDA.  Custom Metrics Autoscaler can monitor event sources like Kafka,
+    RabbitMQ, or cloud event sources and feed the metrics from those sources
+    into the Kubernetes horizontal pod autoscaler.  With Custom Metrics
+    Autoscaler, you can have event driven and serverless scale of deployments
+    within any Kubernetes cluster.
+
+    ## About this Operator
+
+    The Custom Metrics Autoscaler Operator deploys and manages installation of
+    KEDA Controller in the cluster. Install this operator and follow
+    installation instructions on how to install Custom Metrics Autoscaler in you
+    cluster.
+
+
+    ## Prerequisites for enabling this Operator
+
+    ## How to install Custom Metrics Autoscaler in the cluster
+
+    The installation of Custom Metrics Autoscaler is triggered by the creation
+    of `KedaController` resource, please refer to [KedaController
+    Example](https://github.com/openshift/custom-metrics-autoscaler#kedacontroller-spec)
+    for more deatils on available options.
+
+
+    Only resource named `keda` in namespace `openshift-keda` will trigger the
+    installation, reconfiguration or removal of the KEDA Controller resource.
+
+
+    There should be only one KEDA Controller in the cluster. 
+  selector: {}
+  labels:
+    alm-owner-keda: keda
+    operated-by: keda
