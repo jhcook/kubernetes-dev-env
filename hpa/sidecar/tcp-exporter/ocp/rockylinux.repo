@@ -1,0 +1,5 @@
+[rockylinux_base]
+name=Rocky Linux Base
+baseurl=http://dl.rockylinux.org/vault/rocky/8.5/BaseOS/x86_64/os/
+enabled=1
+gpgcheck=0
