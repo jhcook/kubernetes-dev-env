@@ -54,7 +54,7 @@ fi
 
 if [ -f "cert.pem" ]
 then
-  crc config set proxy-ca-file cert.pem
+  crc config set proxy-ca-file "$(pwd)/cert.pem"
 fi
 
 crc start
