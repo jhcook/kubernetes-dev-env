@@ -65,3 +65,37 @@ $ oc delete image $(oc get images -o jsonpath='{range .items[*]}{.dockerImageRef
 * dl.fedoraproject.org
 * mirrors.fedoraproject.org
 * fedora.mirrorservice.org
+
+## SSH into OpenShift Local complains about too many authentication failures
+
+You may receive this error:
+
+```
+$ ssh -i ~/.crc/machines/crc/id_ecdsa -o StrictHostKeyChecking=no core@$(crc ip) -p2222
+The fingerprint for the ED25519 key sent by the remote host is
+SHA256:sl8U//UMvt6qe6Ypct0l7K1jGZWaekaRZfHE9oRrUTM.
+Please contact your system administrator.
+Add correct host key in /Users/jcook/.ssh/known_hosts to get rid of this message.
+Offending ECDSA key in /Users/jcook/.ssh/known_hosts:9
+Password authentication is disabled to avoid man-in-the-middle attacks.
+Keyboard-interactive authentication is disabled to avoid man-in-the-middle attacks.
+UpdateHostkeys is disabled because the host key is not trusted.
+Received disconnect from 127.0.0.1 port 2222:2: Too many authentication failures
+Disconnected from 127.0.0.1 port 2222
+```
+The solution is to use `IdentitiesOnly=yes` flag:
+
+```
+ssh -i ~/.crc/machines/crc/id_ecdsa -o StrictHostKeyChecking=no -o IdentitiesOnly=yes core@$(crc ip) -p2222
+```
+
+## How can I inject a root CA into the host bundle?
+
+Add the cert to `/etc/pki/ca-trust/source/anchors` and restart
+`coreos-update-ca-trust.service`. It will be added to
+`/etc/pki/ca-trust/extracted/pem/tls-ca-bundle.pem`. 
+
+### References
+
+* [How to fix "SSH Too Many Authentication Failures" Error](https://www.tecmint.com/fix-ssh-too-many-authentication-failures-error/)
+* [Recommended way of adding CA Certificate](https://discussion.fedoraproject.org/t/recommended-way-of-adding-ca-certificates/15974/4)
