@@ -59,8 +59,13 @@ then
   set -x
   REDIRECT=""
 else
-  REDIRECT=">/dev/null"
+  REDIRECT="2>/dev/null"
 fi
+
+# A utility function used to print in accordance with LOGLEVEL
+printer() {
+  eval echo -n "${1-}" "${REDIRECT}" 
+}
 
 # Check if all the necessary utilities are available or exit
 # `kubectl` is unnecessary in this context as it is later aliased
@@ -132,10 +137,12 @@ set_prometheus_names() {
   if [ "${RUNTIME}" = "crc" ]
   then # OpenShift
     export PROMETHEUS_NS="openshift-monitoring"
-    export PROMETHEUS_SVC="prometheus-operated"
+    export PROMETHEUS_SVC="thanos-querier"
+    export PROMPORT="9092"
   else # Rancher
     export PROMETHEUS_NS="cattle-monitoring-system"
     export PROMETHEUS_SVC="rancher-monitoring-prometheus"
+    export PROMPORT="9090"
   fi
 }
 
