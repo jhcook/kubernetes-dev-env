@@ -26,6 +26,7 @@
 #
 # References:
 #  * https://discussion.fedoraproject.org/t/recommended-way-of-adding-ca-certificates/15974/4
+#  * https://docs.openshift.com/container-platform/4.11/networking/configuring-a-custom-pki.html
 #
 # Author: Justin Cook
 
@@ -102,11 +103,11 @@ do
       # Copy cert.cer to the machine and restart update-ca-trust service
       if < cert.cer ${SSH_COM} \
       "sudo bash -c \"cat - >/etc/pki/ca-trust/source/anchors/adguard.cer\" ; \
-      sudo systemctl restart coreos-update-ca-trust.service" "${REDIRECT}" 2>&1 
+      sudo systemctl restart coreos-update-ca-trust.service"
       then
         echo "cert.cer added to bundle"
         break
-      fi
+      fi 2> >(printer)
     done
   fi
   wait ${WPID}
