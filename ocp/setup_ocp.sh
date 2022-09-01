@@ -79,7 +79,15 @@ __EOF__
 # If the shell receives a signal, this needs to be handled by a trap. As such,
 # run the process in the background and wait until completion of user-provided
 # configuration of trapping signals.
+
+watchdog() {
+  sleep 900
+  printer "Giving up after fifteen minutes\n"
+  kill -ALRM $$
+}
+
 WPID=0
+INJECTED=false
 while : 
 do
   if ! ps -p ${WPID} >/dev/null
@@ -89,7 +97,7 @@ do
     trap 'kill -9 ${WPID}' EXIT INT TERM
   fi
   # If cert.cer exists, then add it as a root ca on the host.
-  if [ -f "cert.cer" ]
+  if [ -f "cert.cer" ] && [ ${INJECTED} = false ]
   then
     while :
     do
@@ -103,17 +111,21 @@ do
       # Copy cert.cer to the machine and restart update-ca-trust service
       if < cert.cer ${SSH_COM} \
       "sudo bash -c \"cat - >/etc/pki/ca-trust/source/anchors/adguard.cer\" ; \
-      sudo systemctl restart coreos-update-ca-trust.service"
+      sudo systemctl restart coreos-update-ca-trust.service" 2> >(printer) > >(printer)
       then
-        echo "cert.cer added to bundle"
+        INJECTED=true
+        printer "cert.cer added to bundle\n"
         break
-      fi 2> >(printer)
+      fi
     done
   fi
+  printer "Waiting on crc startup\n"
+  watchdog &
+  trap "exit 128" ALRM
   wait ${WPID}
   break
 done
-trap - EXIT INT TERM
+trap - EXIT INT TERM ALRM
 
 #shellcheck disable=SC2046
 eval $(crc oc-env)
