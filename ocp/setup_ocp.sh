@@ -82,7 +82,6 @@ __EOF__
 
 watchdog() {
   sleep 900
-  printer "Giving up after fifteen minutes\n"
   kill -ALRM $$
 }
 
@@ -121,7 +120,7 @@ do
   fi
   printer "Waiting on crc startup\n"
   watchdog &
-  trap "exit 128" ALRM
+  trap "printer \"Giving up after fifteen minutes\n\" ; exit 128" ALRM
   wait ${WPID}
   break
 done
