@@ -57,14 +57,17 @@ trap _exit_ EXIT
 if [ "${LOGLEVEL-}" = "DEBUG" ]
 then
   set -x
-  REDIRECT=""
-else
-  REDIRECT="2>/dev/null"
 fi
 
 # A utility function used to print in accordance with LOGLEVEL
 printer() {
-  eval echo -n "${1-}" "${REDIRECT}" 
+  if [ -n "${1-}" ]
+  then
+    case "${LOGLEVEL-}" in
+      "DEBUG") printf "%b" "${1}" ;;
+      *) printf "%b" "${1}" 2>/dev/null ;;
+    esac
+  fi
 }
 
 # Check if all the necessary utilities are available or exit
