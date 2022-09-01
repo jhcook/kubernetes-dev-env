@@ -43,6 +43,9 @@ export PROJECT_NAMESPACE="boutique"
 # Is the environment running?
 export RUNNING=false
 
+# Trap and ignore signals as appropriate
+trap "" USR1 USR2
+
 _exit_() {
   local lc="$BASH_COMMAND" rc=$?
   if [ "${LOGLEVEL}" = "DEBUG" ]
