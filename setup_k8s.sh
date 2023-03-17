@@ -48,7 +48,7 @@ minikube --addons=ingress,ingress-dns,metrics-server,registry \
          --insecure-registry="10.0.0.0/24" \
          --network-plugin=cni \
          --extra-config="kubeadm.pod-network-cidr=${POD_NET_CIDR}" \
-         --service-cluster-ip-range='10.96.0.0/16' \
+         --service-cluster-ip-range="${SERVICECLUSTERIPRANGE}" \
          --memory=8g \
          --kubernetes-version=v1.24.11 \
          --nodes=3 \
