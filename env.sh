@@ -95,8 +95,8 @@ check_dependencies() {
 }
 
 # Changes in versioning with an independently installed kubectl utility can
-# cause unexpected outcomes with API access. The assumption is Kubernetes is on
-# Minikube or OpenShift Local.
+# cause unexpected outcomes with API access. Therefore, redirect kubectl
+# to and handle proxy variables as appropriate.
 check_platform() {
   if [ "${RUNTIME}" == "minikube" ]
   then
