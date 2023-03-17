@@ -43,15 +43,16 @@
 #         --cache-images=true \
 #         --container-runtime=containerd \
 
+#shellcheck disable=SC2140
 minikube --addons=ingress,ingress-dns,metrics-server,registry \
          --insecure-registry="10.0.0.0/24" \
          --network-plugin=cni \
          --extra-config="kubeadm.pod-network-cidr=${POD_NET_CIDR}" \
          --service-cluster-ip-range='10.96.0.0/16' \
          --memory=8g \
-         --kubernetes-version=v1.23.9 \
+         --kubernetes-version=v1.24.11 \
          --nodes=3 \
-         --insecure-registry="ghcr.io","k8s.gcr.io","gcr.io" \
+         --insecure-registry="ghcr.io","registry.k8s.io","k8s.gcr.io","gcr.io" \
          start
 
 if [ ! -d "/etc/resolver" ]
