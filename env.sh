@@ -134,7 +134,6 @@ check_platform() {
             eval ${np}+=",${MINIKUBENODENET}"
           ;;
         esac
-        export "$\$proxy"
       done
     fi
     if (which minikube && minikube status)
