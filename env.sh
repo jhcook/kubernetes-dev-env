@@ -26,6 +26,7 @@
 # Author: Justin Cook
 
 set -o nounset errexit
+shopt -s extglob
 
 # Set the runtime. Supported options are minikube and crc.
 export RUNTIME="minikube"
@@ -36,6 +37,13 @@ export LOGLEVEL="DEBUG"
 
 # Pod network CIDR
 export POD_NET_CIDR="172.16.0.0/16"
+
+# Minikube IP Network Subnets
+SERVICECLUSTERIPRANGE="10.96.0.0/12"
+HOSTONLYCIDR="192.168.59.0/24"
+MINIKUBEKVM2DRIVER="192.168.39.0/24"
+MINIKUBEDOCKERCLST1="192.168.49.0/24"
+MINIKUBENODENET="192.168.205.0/24"
 
 # Which namespace will the project reside?
 export PROJECT_NAMESPACE="boutique"
@@ -92,6 +100,43 @@ check_dependencies() {
 check_platform() {
   if [ "${RUNTIME}" == "minikube" ]
   then
+    # Installing behind a proxy or VPN can cause problems
+    # https://minikube.sigs.k8s.io/docs/handbook/vpn_and_proxy/
+    # If a proxy is set, then ensure specific subnets to K8s bypass the proxy.
+    if [ -n "${HTTPS_PROXY:-}" ] || [ -n "${HTTP_PROXY:-}" ]
+    then
+      for np in no_proxy NO_PROXY
+      do
+        # Use inline case statements since fallthrough with ;& is not supported
+        # before Bash 4.
+        case ${!np:-} in
+          (!(*"${SERVICECLUSTERIPRANGE}"*))
+            eval ${np}+=",${SERVICECLUSTERIPRANGE}"
+          ;;
+        esac
+        case ${!np:-} in
+          (!(*"${HOSTONLYCIDR}"*))
+            eval ${np}+=",${HOSTONLYCIDR}"
+          ;;
+          esac
+          case ${!np:-} in
+          (!(*"${MINIKUBEDOCKERCLST1}"*))
+            eval ${np}+=",${MINIKUBEDOCKERCLST1}"
+          ;;
+          esac
+          case ${!np:-} in
+          (!(*"${MINIKUBEKVM2DRIVER}"*))
+            eval ${np}+=",${MINIKUBEKVM2DRIVER}"
+          ;;
+          esac
+          case ${!np:-} in
+          (!(*"${MINIKUBENODENET}"*))
+            eval ${np}+=",${MINIKUBENODENET}"
+          ;;
+        esac
+        export "$\$proxy"
+      done
+    fi
     if (which minikube && minikube status)
     then
       RUNNING=true
