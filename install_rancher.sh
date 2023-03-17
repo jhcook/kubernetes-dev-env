@@ -30,7 +30,7 @@ set -o errexit
 . env.sh
 
 # Apply cert-manager crds
-kubectl apply -f https://github.com/jetstack/cert-manager/releases/download/v1.7.3/cert-manager.crds.yaml
+kubectl apply -f https://github.com/jetstack/cert-manager/releases/download/v1.10.2/cert-manager.crds.yaml
 
 # Add the appropriate Helm repos and update
 helm repo add jetstack https://charts.jetstack.io
@@ -41,7 +41,7 @@ helm repo update
 helm upgrade --install cert-manager jetstack/cert-manager \
   --namespace cert-manager \
   --create-namespace \
-  --version v1.7.3
+  --version v1.10.2
 
 # Create the cattle-system namespace
 kubectl create namespace cattle-system --dry-run=client -o yaml | \
@@ -52,7 +52,7 @@ helm upgrade --install rancher rancher-stable/rancher \
   --namespace cattle-system \
   --set hostname=rancher.test \
   --set bootstrapPassword=admin \
-  --version 2.6.5
+  --version 2.7.1
 
 # Wait for Rancher to become available
 kubectl rollout status deploy/rancher -n cattle-system
