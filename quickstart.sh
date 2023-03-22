@@ -30,20 +30,38 @@ set -o errexit nounset
 # shellcheck source=/dev/null
 . env.sh
 
-trap "exit" INT
-
-if [ "${RUNTIME}" = "minikube" ]
+if [ "${RUNTIME}" = "minikube" ] || [ "${RUNTIME}" = "rdctl" ]
 then
-  # Setup Minikube
-  bash setup_k8s.sh
-  # Install Calico
-  bash install_calico.sh
+  # Setup Kubernetes
+  if [ "${RUNTIME}" = "minikube" ]
+  then
+    if [ "${RUNNING}" = "false" ]
+    then
+      bash setup_k8s.sh
+    fi
+    bash cni/install_calico.sh
+  elif [ "${RUNTIME}" = "rdctl" ]
+  then
+    if [ "${RUNNING}" = "false" ]
+    then
+      rdctl start
+      while ! rdctl shell "id" 2>/dev/null
+      do
+        sleep 5
+      done
+      while ! kubectl get nodes 2>/dev/null
+      do
+        sleep 5
+      done
+    fi
+  fi
+
   # Install Rancher
-  bash install_rancher.sh
+  bash rancher/install_rancher.sh
   # Install and configure Prometheus metrics / Grafana dashboards
-  bash install_monitoring.sh
-  bash monitoring/configure_prometheus.sh
-  bash monitoring/configure_grafana_dashboards.sh
+  bash rancher/install_monitoring.sh
+  #bash monitoring/configure_prometheus.sh
+  #bash monitoring/configure_grafana_dashboards.sh
 elif [ "${RUNTIME}" = crc ]
 then
   # Setup OpenShift Local
@@ -54,7 +72,7 @@ else
 fi
 
 # Install boutique
-bash install_boutique.sh
+bash app/install_boutique.sh
 
 if [ "${RUNTIME}" = "crc" ]
 then
