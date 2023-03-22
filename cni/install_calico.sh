@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# Copyright 2022 Justin Cook
+# Copyright 2022-2023 Justin Cook
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to
@@ -32,8 +32,16 @@ set -o errexit
 # shellcheck source=/dev/null
 . env.sh
 
-# Install Tigera operator
-kubectl apply -f https://projectcalico.docs.tigera.io/manifests/tigera-operator.yaml
+CALICOSOURCE="https://raw.githubusercontent.com/projectcalico/calico/v3.25.0/manifests/tigera-operator.yaml"
+
+# Install Tigera operator. In order to compensate for previous runs, remove the
+# previous applied resources. This is not ideal, but Calico uses more space for
+# CRDs than is allowed by apply.
+# TODO: switch to Helm install https://docs.tigera.io/calico/latest/getting-started/kubernetes/helm
+kubectl create -f ${CALICOSOURCE} --dry-run=client -o yaml | \
+kubectl delete -f - || /usr/bin/true
+
+kubectl create -f ${CALICOSOURCE}
 
 # Wait on the operator to run
 kubectl rollout status deploy/tigera-operator -n tigera-operator
