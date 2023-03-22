@@ -29,6 +29,9 @@ set -o errexit
 # shellcheck source=/dev/null
 . env.sh
 
+ORIG_WRK_DIR="$(pwd)"
+THIS_WRK_DIR="app"
+
 # Check if the virtualenv exists. If not, create it.
 if [ ! -d "venv" ]
 then
@@ -41,13 +44,27 @@ source ./venv/bin/activate
 pip install locust
 
 # Check if the boutique, aka microservices-demo, exists. If not, clone it.
+cd "${THIS_WRK_DIR}"
 if [ ! -d "microservices-demo" ]
 then
   git clone https://github.com/GoogleCloudPlatform/microservices-demo.git
+  cd microservices-demo
+else
+  cd microservices-demo
+  git pull
+fi
+
+if ! grep "^${THIS_WRK_DIR}/microservices-demo$" "${ORIG_WRK_DIR}/.gitignore"
+then
+    #shellcheck disable=SC2086
+    if [ -n "$(tail -c1 ${ORIG_WRK_DIR}/.gitignore)" ]
+    then
+        echo "" >> "${ORIG_WRK_DIR}/.gitignore"
+    fi
+    echo "${THIS_WRK_DIR}/microservices-demo" >> "${ORIG_WRK_DIR}/.gitignore"
 fi
 
 # Install the boutique.
-cd microservices-demo || exit
 kubectl apply -f ./release/kubernetes-manifests.yaml
 
 # Wait for the boutique to become available.
@@ -56,12 +73,17 @@ do
   kubectl rollout status "${deploy}"
 done
 
-# Get the IP:Port and display to the user
-#BOUTIQUE=$(kubectl get service frontend-external -o \
-#           jsonpath='{.spec.clusterIP}{":"}{.spec.ports[*].nodePort}{"\n"}')
-
-BOUTIQUE="$(minikube ip):$(kubectl get service frontend-external -o \
+if [ "${RUNTIME}" = "minikube" ]
+then
+  BOUTIQUE="$(minikube ip):$(kubectl get service frontend-external -o \
             jsonpath='{.spec.ports[*].nodePort}{"\n"}')"
+else
+  # Get the IP:Port and display to the user
+  #BOUTIQUE=$(kubectl get service frontend-external -o \
+  #           jsonpath='{.spec.clusterIP}{":"}{.spec.ports[*].nodePort}{"\n"}')
+  BOUTIQUE="127.0.0.1"
+  printf "\nPlease forward service/frontend to localhost and for example:\n"
+fi
 
 printf "\n\nOpen browser to: "
 printf "http://%s\n\n" "${BOUTIQUE}"
