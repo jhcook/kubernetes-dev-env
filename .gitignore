@@ -1,3 +1,5 @@
 cert.pem
-microservices-demo
 venv
+debug.log
+app/microservices-demo
+ingress/nginx/kubernetes-ingress
