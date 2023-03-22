@@ -28,9 +28,10 @@
 set -o nounset errexit
 shopt -s extglob
 
-# Set the runtime. Supported options are minikube and crc.
+# Set the runtime. Supported options are minikube, crc, and rdctl.
 export RUNTIME="minikube"
 #export RUNTIME="crc"
+#export RUNTIME="rdctl"
 
 # Set loglevel to screen. The valid options are INFO and DEBUG
 export LOGLEVEL="DEBUG"
@@ -136,9 +137,11 @@ check_platform() {
         esac
       done
     fi
-    if (which minikube && minikube status)
+    if minikube status 2>/dev/null
     then
       RUNNING=true
+    else
+      RUNNING=false
     fi
     alias kubectl="minikube kubectl --"
   elif [ "${RUNTIME}" = "crc" ]
@@ -150,6 +153,18 @@ check_platform() {
       eval $(crc oc-env)
     fi
     alias kubectl="oc"
+  elif [ "${RUNTIME}" = "rdctl" ]
+  then
+    if rdctl shell "id" 2>/dev/null
+    then
+      case :$PATH: in 
+        *:$HOME/.rd/bin:*) ;; 
+        *) export PATH=$HOME/.rd/bin:$PATH ;;
+      esac
+      RUNNING=true
+    else
+      RUNNING=false
+    fi
   else
     alias kubectl="kubectl --kubeconfig=kubeconfig --insecure-skip-tls-verify=true"
     RUNNING=true
