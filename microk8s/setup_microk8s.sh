@@ -25,7 +25,7 @@
 # shellcheck source=/dev/null
 #. env.sh
 
-set -o errexit
+set -o errexit nounset
 
 K8SVER="1.24/stable"
 
@@ -52,14 +52,14 @@ microk8s status --wait-ready
 # Configure microk8s to use correct Kubernetes version
 # https://microk8s.io/docs/setting-snap-channel
 
-# Remove motd from the master
+# Remove motd from the master as it's too noisy
 # https://stackoverflow.com/questions/41706150/commenting-out-lines-in-a-file-using-a-bash-script
 echo "sudo sed -i '/^session    optional     pam_motd\.so/s/^/#/' /etc/pam.d/sshd" |\
-multipass shell microk8s-vm
+multipass shell microk8s-vm 2>/dev/null
 
 # Get the version of microk8s snap and configure if mismatched
 ver=$(echo "snap list microk8s" | multipass shell microk8s-vm | tail -n1 | awk '{print$4}')
-if [ "$ver" != "${K8SVER}" ]
+if [ "${ver:=0}" != "${K8SVER}" ]
 then
     echo "Configuring microk8s to use ${K8SVER}"
     echo "sudo snap refresh microk8s --classic --channel=${K8SVER}" | \
@@ -104,15 +104,20 @@ done
 
 for node in microk8s-vm-node{1..2}
 do
-    # Remove motd from the master
+    # Remove motd from the node as it's too noisy 
     # https://stackoverflow.com/questions/41706150/commenting-out-lines-in-a-file-using-a-bash-script
     echo "sudo sed -i '/^session    optional     pam_motd\.so/s/^/#/' /etc/pam.d/sshd" |\
-    multipass shell "${node}"
-    echo "Configuring ${node}"
-    echo "${NODECMDS}" | multipass shell "${node}"
-    echo "Restarting ${node}"
-    multipass stop "${node}"
-    multipass start "${node}"
+    multipass shell "${node}" 2>/dev/null
+    # Get the version of microk8s snap and configure if mismatched
+    ver=$(echo "snap list microk8s" | multipass shell "${node}" | tail -n1 | awk '{print$4}')
+    if [ "${ver:=0}" != "${K8SVER}" ]
+    then
+        echo "Configuring ${node}"
+        echo "${NODECMDS}" | multipass shell "${node}"
+        echo "Restarting ${node}"
+        multipass stop "${node}"
+        multipass start "${node}"
+    fi
 done
 
 # Join node(s) and create a Kubernetes cluster
