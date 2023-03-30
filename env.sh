@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# Copyright 2022 Justin Cook
+# Copyright 2022-2023 Justin Cook
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to
@@ -27,11 +27,13 @@
 
 set -o nounset errexit
 shopt -s extglob
+shopt -s expand_aliases
 
 # Set the runtime. Supported options are minikube, crc, and rdctl.
 export RUNTIME="minikube"
 #export RUNTIME="crc"
 #export RUNTIME="rdctl"
+#export RUNTIME="microk8s"
 
 # Set loglevel to screen. The valid options are INFO and DEBUG
 export LOGLEVEL="DEBUG"
@@ -40,11 +42,14 @@ export LOGLEVEL="DEBUG"
 export POD_NET_CIDR="172.16.0.0/16"
 
 # Minikube IP Network Subnets
-SERVICECLUSTERIPRANGE="10.96.0.0/12"
-HOSTONLYCIDR="192.168.59.0/24"
-MINIKUBEKVM2DRIVER="192.168.39.0/24"
-MINIKUBEDOCKERCLST1="192.168.49.0/24"
-MINIKUBENODENET="192.168.205.0/24"
+export SERVICECLUSTERIPRANGE="10.96.0.0/12"
+export HOSTONLYCIDR="192.168.59.0/24"
+export MINIKUBEKVM2DRIVER="192.168.39.0/24"
+export MINIKUBEDOCKERCLST1="192.168.49.0/24"
+export MINIKUBENODENET="192.168.205.0/24"
+
+# shellcheck source=platform.sh
+source platform.sh
 
 # Which namespace will the project reside?
 export PROJECT_NAMESPACE="boutique"
@@ -93,82 +98,6 @@ check_dependencies() {
         exit 1
     fi
   done
-}
-
-# Changes in versioning with an independently installed kubectl utility can
-# cause unexpected outcomes with API access. Therefore, redirect kubectl
-# to and handle proxy variables as appropriate.
-check_platform() {
-  if [ "${RUNTIME}" == "minikube" ]
-  then
-    # Installing behind a proxy or VPN can cause problems
-    # https://minikube.sigs.k8s.io/docs/handbook/vpn_and_proxy/
-    # If a proxy is set, then ensure specific subnets to K8s bypass the proxy.
-    if [ -n "${HTTPS_PROXY:-}" ] || [ -n "${HTTP_PROXY:-}" ]
-    then
-      for np in no_proxy NO_PROXY
-      do
-        # Use inline case statements since fallthrough with ;& is not supported
-        # before Bash 4.
-        case ${!np:-} in
-          (!(*"${SERVICECLUSTERIPRANGE}"*))
-            eval ${np}+=",${SERVICECLUSTERIPRANGE}"
-          ;;
-        esac
-        case ${!np:-} in
-          (!(*"${HOSTONLYCIDR}"*))
-            eval ${np}+=",${HOSTONLYCIDR}"
-          ;;
-          esac
-          case ${!np:-} in
-          (!(*"${MINIKUBEDOCKERCLST1}"*))
-            eval ${np}+=",${MINIKUBEDOCKERCLST1}"
-          ;;
-          esac
-          case ${!np:-} in
-          (!(*"${MINIKUBEKVM2DRIVER}"*))
-            eval ${np}+=",${MINIKUBEKVM2DRIVER}"
-          ;;
-          esac
-          case ${!np:-} in
-          (!(*"${MINIKUBENODENET}"*))
-            eval ${np}+=",${MINIKUBENODENET}"
-          ;;
-        esac
-      done
-    fi
-    if minikube status 2>/dev/null
-    then
-      RUNNING=true
-    else
-      RUNNING=false
-    fi
-    alias kubectl="minikube kubectl --"
-  elif [ "${RUNTIME}" = "crc" ]
-  then
-    if (which crc && crc status)
-    then
-      RUNNING=true
-      #shellcheck disable=SC2046
-      eval $(crc oc-env)
-    fi
-    alias kubectl="oc"
-  elif [ "${RUNTIME}" = "rdctl" ]
-  then
-    if rdctl shell "id" 2>/dev/null
-    then
-      case :$PATH: in 
-        *:$HOME/.rd/bin:*) ;; 
-        *) export PATH=$HOME/.rd/bin:$PATH ;;
-      esac
-      RUNNING=true
-    else
-      RUNNING=false
-    fi
-  else
-    alias kubectl="kubectl --kubeconfig=kubeconfig --insecure-skip-tls-verify=true"
-    RUNNING=true
-  fi
 }
 
 # Create the namespace
@@ -227,7 +156,6 @@ set_docker_env() {
 
 CMDS=$(cat - <<__EOF__
 check_dependencies
-check_platform
 create_namespace
 set_default_namespace
 set_prometheus_names
