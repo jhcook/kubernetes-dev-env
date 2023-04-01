@@ -27,6 +27,17 @@
 
 set -o errexit
 
-multipass delete microk8s-vm-node1 microk8s-vm-node2
+$(which kubectl) config delete-context microk8s-cluster || /usr/bin/true
+$(which kubectl) config delete-cluster microk8s-cluster || /usr/bin/true
+
+for node in microk8s-vm{,-node{1,2}}
+do
+    echo "Stopping: ${node}"
+    if multipass stop "${node}"
+    then
+        echo "Deleting: ${node}"
+        multipass delete "${node}" || /usr/bin/true
+    fi
+done
+
 multipass purge
-microk8s uninstall

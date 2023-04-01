@@ -23,7 +23,7 @@
 # Setup microk8s for use within this code base.
 
 # shellcheck source=/dev/null
-#. env.sh
+. env.sh
 
 set -o errexit nounset
 
@@ -39,54 +39,6 @@ do
     fi
 done
 
-# Save the "old" STDOUT and redirect any output to STDOUT to /dev/null
-#exec 3>&1
-#exec 1> debug.log
-
-# Install microk8s and wait until ready
-# The hard way: https://microk8s.io/docs/install-multipass
-echo "Installing microk8s"
-microk8s install
-microk8s status --wait-ready
-
-# Configure microk8s to use correct Kubernetes version
-# https://microk8s.io/docs/setting-snap-channel
-
-# Remove motd from the master as it's too noisy
-# https://stackoverflow.com/questions/41706150/commenting-out-lines-in-a-file-using-a-bash-script
-echo "sudo sed -i '/^session    optional     pam_motd\.so/s/^/#/' /etc/pam.d/sshd" |\
-multipass shell microk8s-vm 2>/dev/null
-
-# Get the version of microk8s snap and configure if mismatched
-ver=$(echo "snap list microk8s" | multipass shell microk8s-vm | tail -n1 | awk '{print$4}')
-if [ "${ver:=0}" != "${K8SVER}" ]
-then
-    echo "Configuring microk8s to use ${K8SVER}"
-    echo "sudo snap refresh microk8s --classic --channel=${K8SVER}" | \
-        multipass shell microk8s-vm | grep microk8s
-    echo "Restarting microk8s"
-    microk8s stop
-    microk8s start
-    microk8s status --wait-ready
-fi
-
-# Voila! And enable the correct services
-echo "Enabling DNS and internal Registry"
-microk8s enable dns registry
-
-# Helm addon is not reliable. So, export kubeconfig.
-if [ ! -d "${HOME}/.kube" ]
-then
-    mkdir "${HOME}/.kube"
-fi
-microk8s config > "${HOME}/.kube/microk8s.conf"
-chmod 0700 "${HOME}/.kube/microk8s.conf"
-export KUBECONFIG="${HOME}/.kube/microk8s.conf"
-
-# Create node(s), configure, and add to cluster
-# https://microk8s.io/docs/clustering
-# https://microk8s.io/docs/install-multipass
-
 NODECMDS=$(cat <<__CMD__
 sudo snap install microk8s --classic --channel="${K8SVER}"
 sudo iptables -P FORWARD ACCEPT
@@ -95,48 +47,67 @@ newgrp microk8s
 __CMD__
 )
 
-for node in microk8s-vm-node{1..2}
+# Install microk8s and wait until ready
+# The hard way: https://microk8s.io/docs/install-multipass
+# https://microk8s.io/docs/clustering
+# https://microk8s.io/docs/install-multipass
+for node in microk8s-vm{,-node{1,2}}
 do
-    if multipass info "${node}" 2>/dev/null ; then continue ; fi
-    echo "Creating ${node}"
-    multipass launch --name "${node}" --memory 8G --disk 40G
-done
+    if ! multipass info "${node}" 2>/dev/null
+    then
+        echo "Creating: ${node}"
+        multipass launch --name "${node}" --memory 8G --disk 40G
+    fi
 
-for node in microk8s-vm-node{1..2}
-do
-    # Remove motd from the node as it's too noisy 
+    # Remove motd from the master as it's too noisy
     # https://stackoverflow.com/questions/41706150/commenting-out-lines-in-a-file-using-a-bash-script
     echo "sudo sed -i '/^session    optional     pam_motd\.so/s/^/#/' /etc/pam.d/sshd" |\
-    multipass shell "${node}" 2>/dev/null
+    multipass shell "${node}" | cat - >/dev/null 2>&1
+
+    # Configure microk8s to use correct Kubernetes version
+    # https://microk8s.io/docs/setting-snap-channel
     # Get the version of microk8s snap and configure if mismatched
     ver=$(echo "snap list microk8s" | multipass shell "${node}" | tail -n1 | awk '{print$4}')
     if [ "${ver:=0}" != "${K8SVER}" ]
     then
-        echo "Configuring ${node}"
+        echo "Configuring ${node} to use ${K8SVER}"
         echo "${NODECMDS}" | multipass shell "${node}"
-        echo "Restarting ${node}"
-        multipass stop "${node}"
-        multipass start "${node}"
+    fi
+    
+    # Join node(s) to master and create a Kubernetes cluster
+    if [ "${node}" != "microk8s-vm" ]
+    then
+        if kubectl get "node/${node}" 2>/dev/null ; then continue ; fi
+        # Get the node's IP address
+        NIP=$(multipass info "${node}" --format json | jq -r ".info.\"${node}\".ipv4[0]")
+        # Add worker to /etc/hosts on master
+        echo "sudo bash -c \"echo ${NIP} ${node} | cat - >>/etc/hosts\"" |\
+            multipass shell microk8s-vm
+        # Get a token to add node on master
+        microk8s add-node | grep "microk8s\ join\ .*\ --worker" |\
+            multipass shell "${node}"
+    else
+        microk8s status --wait-ready
+        # Helm addon is not reliable. So, export kubeconfig, merge with
+        # existing, and set context.
+        if [ ! -d "${HOME}/.kube" ]
+        then
+            mkdir "${HOME}/.kube"
+        fi
+        $(which kubectl) config delete-context microk8s-cluster || /usr/bin/true
+        $(which kubectl) config delete-cluster microk8s-cluster || /usr/bin/true
+        microk8s config > "${HOME}/.kube/config-microk8s"
+        chmod 0600 "${HOME}/.kube/config-microk8s"
+        KUBECONFIG="${KUBECONFIG}:${HOME}/.kube/config-microk8s" \
+        $(which kubectl) config view --flatten > "${KUBECONFIG%%:*}"
+        $(which kubectl) config set-context microk8s-cluster --namespace default
     fi
 done
 
-# Join node(s) and create a Kubernetes cluster
-for node in microk8s-vm-node{1..2}
-do
-    if kubectl get "node/${node}" 2>/dev/null ; then continue ; fi
-    # Get the node's IP address
-    NIP=$(multipass info "${node}" --format json | jq -r ".info.\"${node}\".ipv4[0]")
-    # Add worker to /etc/hosts on master
-    echo "sudo bash -c \"echo ${NIP} ${node} | cat - >>/etc/hosts\"" |\
-        multipass shell microk8s-vm
-    # Get a token to add node on master
-    microk8s add-node | grep "microk8s join\ .*\ --worker" | \
-        multipass shell "${node}"
-done
-
+# Wait for nodes to become ready
 kubectl wait --for=condition=Ready nodes --all
-microk8s enable ingress
-kubectl rollout status ds/nginx-ingress-microk8s-controller -n ingress
 
-# Turn off redirect by reverting STDOUT
-#exec 1>&3-
+# Voila! Enable the correct services and wait for ingress to deploy
+echo "Enabling DNS, internal registry, and ingress"
+microk8s enable dns registry ingress
+kubectl rollout status ds/nginx-ingress-microk8s-controller -n ingress

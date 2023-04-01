@@ -6,6 +6,18 @@ from developer workstations to production.
 
 https://microk8s.io
 
+## Quickstart
+To get up and running, ensure `microk8s` is installed with `multipass` and
+`jq`. If those applications are in your PATH, then execute the following
+script. The script is idempotent and can be ran to create and join nodes:
+
+```
+$ bash microk8s/setup_microk8s.sh
+...
+```
+
+The cluster can be destroyed with `bash microk8s/remove_microk8s.sh`.
+
 ## Getting Started
 On macOS:
 

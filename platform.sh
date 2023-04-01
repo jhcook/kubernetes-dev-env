@@ -94,14 +94,14 @@ then
         fi
     elif [ "${RUNTIME}" = "microk8s" ]
     then
-        alias kubectl="microk8s kubectl --"
-    if microk8s status 2>/dev/null
-    then
-        RUNNING=true
-        export KUBECONFIG="${HOME}/.kube/microk8s.conf"
-    else
-        RUNNING=false
-    fi
+        #alias kubectl="microk8s kubectl --"
+        if microk8s status 2>/dev/null
+        then
+            RUNNING=true
+            #export KUBECONFIG="${HOME}/.kube/config-microk8s"
+        else
+            RUNNING=false
+        fi
 else
     alias kubectl="kubectl --kubeconfig=kubeconfig --insecure-skip-tls-verify=true"
     #shellcheck disable=SC2034
