@@ -71,37 +71,41 @@ then
         RUNNING=false
     fi
         alias kubectl="minikube kubectl --"
-    elif [ "${RUNTIME}" = "crc" ]
+elif [ "${RUNTIME}" = "crc" ]
+then
+    if (which crc && crc status)
+then
+    RUNNING=true
+    #shellcheck disable=SC2046
+    eval $(crc oc-env)
+fi
+    alias kubectl="oc"
+elif [ "${RUNTIME}" = "rdctl" ]
+then
+    if rdctl shell "id" 2>/dev/null
     then
-        if (which crc && crc status)
+        case :$PATH: in 
+        *:$HOME/.rd/bin:*) ;; 
+        *) export PATH=$HOME/.rd/bin:$PATH ;;
+        esac
+        RUNNING=true
+    else
+        RUNNING=false
+    fi
+elif [ "${RUNTIME}" = "microk8s" ]
+then
+    #alias kubectl="microk8s kubectl --"
+    if microk8s status 2>/dev/null
     then
         RUNNING=true
-        #shellcheck disable=SC2046
-        eval $(crc oc-env)
+        #export KUBECONFIG="${HOME}/.kube/config-microk8s"
+    else
+        RUNNING=false
     fi
-        alias kubectl="oc"
-    elif [ "${RUNTIME}" = "rdctl" ]
+elif [ "${RUNTIME}" = "rke2" ]
     then
-        if rdctl shell "id" 2>/dev/null
-        then
-            case :$PATH: in 
-            *:$HOME/.rd/bin:*) ;; 
-            *) export PATH=$HOME/.rd/bin:$PATH ;;
-            esac
-            RUNNING=true
-        else
-            RUNNING=false
-        fi
-    elif [ "${RUNTIME}" = "microk8s" ]
-    then
-        #alias kubectl="microk8s kubectl --"
-        if microk8s status 2>/dev/null
-        then
-            RUNNING=true
-            #export KUBECONFIG="${HOME}/.kube/config-microk8s"
-        else
-            RUNNING=false
-        fi
+        alias rke2="multipass"
+        RUNNING=true
 else
     alias kubectl="kubectl --kubeconfig=kubeconfig --insecure-skip-tls-verify=true"
     #shellcheck disable=SC2034
