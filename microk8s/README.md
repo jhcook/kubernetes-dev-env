@@ -76,6 +76,14 @@ Started.
 
 More information can be found on [snap channels here](ttps://microk8s.io/docs/setting-snap-channel).
 
+## Clean Up
+When finished, you may delete all nodes, for example:
+
+```
+$ bash microk8s/remove_microk8s.sh
+...
+```
+
 ## Troubleshooting
 
 If you have previously used `multipass`, you may find your previous
