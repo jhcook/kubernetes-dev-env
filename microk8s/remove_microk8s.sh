@@ -23,21 +23,16 @@
 # Remove microk8s configured from this code base.
 
 # shellcheck source=/dev/null
-#. env.sh
+. env.sh
 
 set -o errexit
 
 $(which kubectl) config delete-context microk8s-cluster || /usr/bin/true
 $(which kubectl) config delete-cluster microk8s-cluster || /usr/bin/true
 
-for node in microk8s-vm{,-node{1,2}}
+for node in $(multipass list --format=json | \
+              jq -r '.list[] | select(.name | match("microk8s-*")) | .name')
 do
-    echo "Stopping: ${node}"
-    if multipass stop "${node}"
-    then
-        echo "Deleting: ${node}"
-        multipass delete "${node}" || /usr/bin/true
-    fi
+    echo "Deleting: ${node}"
+    multipass delete "${node}" --purge || /usr/bin/true
 done
-
-multipass purge
