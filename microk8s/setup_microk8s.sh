@@ -28,6 +28,8 @@
 set -o errexit nounset
 
 K8SVER="1.24/stable"
+KUBECTL="$(which kubectl)"
+LOCALKUBECONFIG="${HOME}/.kube/config-microk8s"
 
 # Ensure dependencies available
 for cmd in "microk8s" "multipass" "jq"
@@ -77,7 +79,7 @@ do
     # Join node(s) to master and create a Kubernetes cluster
     if [ "${node}" != "microk8s-vm" ]
     then
-        if kubectl get "node/${node}" 2>/dev/null ; then continue ; fi
+        if "${KUBECTL}" get "node/${node}" 2>/dev/null ; then continue ; fi
         # Get the node's IP address
         NIP=$(multipass info "${node}" --format json | jq -r ".info.\"${node}\".ipv4[0]")
         # Add worker to /etc/hosts on master
@@ -86,6 +88,16 @@ do
         # Get a token to add node on master
         microk8s add-node | grep "microk8s\ join\ .*\ --worker" |\
             multipass shell "${node}"
+        # Wait for the node to appear on the control plane
+        while :
+        do
+            sleep 5
+            if "${KUBECTL}" get node/"${node}" >/dev/null 2>&1
+            then
+                sleep 5
+                break
+            fi
+        done
     else
         microk8s status --wait-ready
         # Helm addon is not reliable. So, export kubeconfig, merge with
@@ -94,20 +106,20 @@ do
         then
             mkdir "${HOME}/.kube"
         fi
-        $(which kubectl) config delete-context microk8s-cluster || /usr/bin/true
-        $(which kubectl) config delete-cluster microk8s-cluster || /usr/bin/true
-        microk8s config > "${HOME}/.kube/config-microk8s"
-        chmod 0600 "${HOME}/.kube/config-microk8s"
-        KUBECONFIG="${KUBECONFIG}:${HOME}/.kube/config-microk8s" \
-        $(which kubectl) config view --flatten > "${KUBECONFIG%%:*}"
-        $(which kubectl) config set-context microk8s-cluster --namespace default
+        "${KUBECTL}" config delete-context microk8s-cluster || /usr/bin/true
+        "${KUBECTL}" config delete-cluster microk8s-cluster || /usr/bin/true
+        microk8s config > "${LOCALKUBECONFIG}"
+        chmod 0600 "${LOCALKUBECONFIG}"
+        export KUBECONFIG="${KUBECONFIG:-$HOME/.kube/config}:${LOCALKUBECONFIG}"
+        "${KUBECTL}" config view --flatten > "${KUBECONFIG%%:*}"
+        "${KUBECTL}" config set-context microk8s-cluster --namespace default
     fi
 done
 
 # Wait for nodes to become ready
-kubectl wait --for=condition=Ready nodes --all
+"${KUBECTL}" wait --for=condition=Ready nodes --all --timeout=600s
 
 # Voila! Enable the correct services and wait for ingress to deploy
 echo "Enabling DNS, internal registry, and ingress"
 microk8s enable dns registry ingress
-kubectl rollout status ds/nginx-ingress-microk8s-controller -n ingress
+"${KUBECTL}" rollout status ds/nginx-ingress-microk8s-controller -n ingress
