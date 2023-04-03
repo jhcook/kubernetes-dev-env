@@ -105,6 +105,8 @@ then
 elif [ "${RUNTIME}" = "rke2" ]
     then
         alias rke2="multipass"
+        MULTIPASSCMD="$(command -v multipass)"
+        KUBECTL="$(command -v kubectl)"
         RUNNING=true
 else
     alias kubectl="kubectl --kubeconfig=kubeconfig --insecure-skip-tls-verify=true"
