@@ -118,7 +118,7 @@ __EOF__
 }
 
 cat << __EOF__
-Creating cluster ${NAME} with ${MASTER_NODE_COUNT} masters and
+Creating cluster ${NAME} with ${MASTER_NODE_COUNT} masters and \
 ${AGENT_NODE_COUNT} nodes.
 __EOF__
 
