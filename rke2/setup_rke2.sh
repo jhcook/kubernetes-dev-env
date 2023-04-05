@@ -28,8 +28,7 @@
 
 # shellcheck source=/dev/null
 source env.sh
-# shellcheck disable=SC2086
-source "$(dirname $0)/localenv.sh"
+source "$(dirname "$0")/localenv.sh"
 
 set -o errexit nounset
 
@@ -37,11 +36,9 @@ if [ -z "${TOKEN}" ]
 then
     TOKEN=$(echo $RANDOM | md5sum | head -c20)
     echo "Generated agent token: ${TOKEN}"
-    # shellcheck disable=SC2086
-    sed "s/TOKEN=\".*\"/TOKEN=\"${TOKEN}\"/" "$(dirname $0)/localenv.sh" > \
-        "$(dirname $0)/localenv.sh.$$"
-    # shellcheck disable=SC2086
-    mv "$(dirname $0)/localenv.sh.$$" "$(dirname $0)/localenv.sh"
+    sed "s/TOKEN=\".*\"/TOKEN=\"${TOKEN}\"/" "$(dirname "$0")/localenv.sh" > \
+        "$(dirname "$0")/localenv.sh.$$"
+    mv "$(dirname "$0")/localenv.sh.$$" "$(dirname "$0")/localenv.sh"
 fi
 
 # Check if name is given or create random name
@@ -49,15 +46,14 @@ if [ -z "${NAME}" ]
 then
     NAME=$(grep -E '^[a-z]{5}$' /usr/share/dict/words | shuf -n1)
     echo "Selected name: ${NAME}"
-    # shellcheck disable=SC2086
-    sed "s/NAME=\".*\"/NAME=\"${NAME}\"/" "$(dirname $0)/localenv.sh" > \
-        "$(dirname $0)/localenv.sh.$$"
-    # shellcheck disable=SC2086
-    mv "$(dirname $0)/localenv.sh.$$" "$(dirname $0)/localenv.sh"
+    sed "s/NAME=\".*\"/NAME=\"${NAME}\"/" "$(dirname "$0")/localenv.sh" > \
+        "$(dirname "$0")/localenv.sh.$$"
+    mv "$(dirname "$0")/localenv.sh.$$" "$(dirname "$0")/localenv.sh"
 fi
 
 cleanup() {
-    for file in ${SUBDIR:-./}${NAME}-{pm,master,agent}-cloud-init.yaml
+    for file in ${SUBDIR:-./}${NAME}-{pm,master,agent}-cloud-init.yaml \
+                "$(dirname "$0")/localenv.sh.$$"
     do
         rm -f "${file}" >/dev/null 2>&1
     done
@@ -82,8 +78,11 @@ EOM
 )
 }
 
-# A convenience function called throughout the code to create multipass
-# instances. It requires arguments passed:
+# A convenience function called throughout the code to check the status of an
+# instance passed to this function as "$1". If the instance is "Running", then
+# carry on silently, "Stopped" then start, and if nonexistent, create a
+# multipass instance. Wait on each node to register and become ready.
+# It requires arguments passed:
 # 1: instance name
 # 2: number of cpus
 # 3: disk size
@@ -91,9 +90,22 @@ EOM
 # 5: image name
 # 6: cloud-init file name
 create_multipass_node() {
-    echo "Creating ${1} node"
-    ${MULTIPASSCMD} launch --cpus "${2}" --disk "${3}" --memory "${4}" "${5}" \
-    --name "${1}" --cloud-init "${SUBDIR:-./}${6}" --timeout=600
+    local __state__
+    __state__="$(${MULTIPASSCMD} list --format=json | \
+    jq -r ".list[] | select(.name | contains(\"${1}\")) | .state")"
+    if [ "${__state__}" = "Running" ]
+    then
+        :
+    elif [ "${__state__}" = "Stopped" ]
+    then
+        ${MULTIPASSCMD} start "${1}"
+    else
+        echo "Creating ${1} node"
+        ${MULTIPASSCMD} launch --cpus "${2}" --disk "${3}" --memory "${4}" "${5}" \
+        --name "${1}" --cloud-init "${SUBDIR:-./}${6}" --timeout=600
+    fi
+    wait_on_node "${1}"
+
 }
 
 # A convenience function called throughout the code to detect node registration
@@ -126,14 +138,9 @@ __EOF__
 CONFIGYAML="token: ${TOKEN}\nwrite-kubeconfig-mode: 644\ntls-san: ${TLSSAN}"
 create_cloudinit_template
 echo "${CLOUDINIT_TEMPLATE}" > "${NAME}-pm-cloud-init.yaml"
-
-if ! ${MULTIPASSCMD} info "${NAME}-rke2-master-1" >/dev/null 2>&1
-then
-    create_multipass_node "${NAME}-rke2-master-1" "${MASTER_NODE_CPU}" \
-        "${MASTER_DISK_SIZE}" "${MASTER_MEMORY_SIZE}" "${IMAGE}" \
-        "${NAME}-pm-cloud-init.yaml"
-fi
-wait_on_node "${NAME}-rke2-master-1"
+create_multipass_node "${NAME}-rke2-master-1" "${MASTER_NODE_CPU}" \
+    "${MASTER_DISK_SIZE}" "${MASTER_MEMORY_SIZE}" "${IMAGE}" \
+    "${NAME}-pm-cloud-init.yaml"
 
 # Retrieve info to join agent to cluster
 SERVER_IP=$($MULTIPASSCMD info "${NAME}-rke2-master-1" --format=json | \
@@ -141,22 +148,15 @@ SERVER_IP=$($MULTIPASSCMD info "${NAME}-rke2-master-1" --format=json | \
 URL="https://${SERVER_IP}:9345"
 
 # Create additional masters
-if [ "${MASTER_NODE_COUNT}" -gt 1 ]
-then
-    CONFIGYAML="server: ${URL}\ntoken: ${TOKEN}\nwrite-kubeconfig-mode: 644\ntls-san: ${TLSSAN}"
-    create_cloudinit_template
-    echo "${CLOUDINIT_TEMPLATE}" > "${NAME}-master-cloud-init.yaml"
-    for ((i=2; i<=MASTER_NODE_COUNT; i++))
-    do
-        if ! ${MULTIPASSCMD} info "${NAME}-rke2-master-${i}" >/dev/null 2>&1
-        then
-            create_multipass_node "${NAME}-rke2-master-${i}" "${MASTER_NODE_CPU}" \
-                "${MASTER_DISK_SIZE}" "${MASTER_MEMORY_SIZE}" "${IMAGE}" \
-                "${NAME}-master-cloud-init.yaml"
-        fi
-        wait_on_node "${NAME}-rke2-master-${i}"
-    done
-fi
+CONFIGYAML="server: ${URL}\ntoken: ${TOKEN}\nwrite-kubeconfig-mode: 644\ntls-san: ${TLSSAN}"
+create_cloudinit_template
+echo "${CLOUDINIT_TEMPLATE}" > "${NAME}-master-cloud-init.yaml"
+for ((i=2; i<=MASTER_NODE_COUNT; i++))
+do
+    create_multipass_node "${NAME}-rke2-master-${i}" "${MASTER_NODE_CPU}" \
+        "${MASTER_DISK_SIZE}" "${MASTER_MEMORY_SIZE}" "${IMAGE}" \
+        "${NAME}-master-cloud-init.yaml"
+done
 
 # Prepare agent node cloud-init
 CONFIGYAML="server: ${URL}\ntoken: ${TOKEN}"
@@ -166,41 +166,46 @@ create_cloudinit_template
 echo "${CLOUDINIT_TEMPLATE}" > "${NAME}-agent-cloud-init.yaml"
 for ((i=1; i<=AGENT_NODE_COUNT; i++))
 do
-    if ! ${MULTIPASSCMD} info "${NAME}-rke2-agent-${i}" >/dev/null 2>&1
-    then
-        create_multipass_node "${NAME}-rke2-agent-${i}" "${AGENT_NODE_CPU}" \
-            "${AGENT_DISK_SIZE}" "${AGENT_MEMORY_SIZE}" "${IMAGE}" \
-            "${NAME}-agent-cloud-init.yaml"
-    fi
-    wait_on_node "${NAME}-rke2-agent-${i}"
+    create_multipass_node "${NAME}-rke2-agent-${i}" "${AGENT_NODE_CPU}" \
+        "${AGENT_DISK_SIZE}" "${AGENT_MEMORY_SIZE}" "${IMAGE}" \
+        "${NAME}-agent-cloud-init.yaml"
 done
 
-# Retrieve the kubeconfig, edit server address, and merge it with the local
-# kubeconfig in order to use contexts.
-# shellcheck disable=SC2086
-if [ ! -d "$(dirname ${LOCALKUBECONFIG})" ]
+# Check if `kubectl` exists in PATH. If so, merge KUBECONFIG and set as
+# default context.
+if command -v kubectl
 then
-    # shellcheck disable=SC2086
-    mkdir "$(dirname ${LOCALKUBECONFIG})"
-fi
-${MULTIPASSCMD} copy-files "${NAME}-rke2-master-1:/etc/rancher/rke2/rke2.yaml" - | \
-sed "/^[[:space:]]*server:/ s_:.*_: \"https://${SERVER_IP}:6443\"_" > \
-    "${LOCALKUBECONFIG}"
-chmod 0600 "${LOCALKUBECONFIG}"
+    # Retrieve the kubeconfig, edit server address, and merge it with the local
+    # kubeconfig in order to use contexts.
+    if [ ! -d "$(dirname "${LOCALKUBECONFIG}")" ]
+    then
+        mkdir "$(dirname "${LOCALKUBECONFIG}")"
+    fi
+    ${MULTIPASSCMD} copy-files "${NAME}-rke2-master-1:/etc/rancher/rke2/rke2.yaml" - | \
+    sed "/^[[:space:]]*server:/ s_:.*_: \"https://${SERVER_IP}:6443\"_" > \
+        "${LOCALKUBECONFIG}"
+    chmod 0600 "${LOCALKUBECONFIG}"
 
-"${KUBECTL}" config delete-context "${NAME}-rke-cluster" || /usr/bin/true
-"${KUBECTL}" config delete-cluster "${NAME}-rke-cluster" || /usr/bin/true
-export KUBECONFIG="${KUBECONFIG:-${HOME}/.kube/config}:${LOCALKUBECONFIG}"
-# shellcheck disable=SC2086
-if [ ! -d "$(dirname ${KUBECONFIG%%:*})" ]
-then
-    # shellcheck disable=SC2086
-    mkdir "$(dirname ${KUBECONFIG%%:*})"
+    "${KUBECTLCMD}" config delete-context "${NAME}-rke-cluster" || /usr/bin/true
+    export KUBECONFIG="${KUBECONFIG:-${HOME}/.kube/config}:${LOCALKUBECONFIG}"
+    if [ ! -d "$(dirname "${KUBECONFIG%%:*}")" ]
+    then
+        mkdir "$(dirname "${KUBECONFIG%%:*}")"
+    fi
+    "${KUBECTLCMD}" config view --flatten > "${KUBECONFIG%%:*}"
+    "${KUBECTLCMD}" config set-context "${NAME}-rke-cluster" --namespace default
+else
+    cat << __EOF__
+
+kubectl not found in PATH
+Use the following alias for kubectl:
+alias kubectl="\${MULTIPASSCMD} exec \${NAME}-rke2-master-1 -- \
+/var/lib/rancher/rke2/bin/kubectl --kubeconfig /etc/rancher/rke2/rke2.yaml"
+
+__EOF__
 fi
-"${KUBECTL}" config view --flatten > "${KUBECONFIG%%:*}"
-"${KUBECTL}" config set-context "${NAME}-rke-cluster" --namespace default
 
 echo "rke2 setup complete"
-"${KUBECTL}" get nodes
+${KUBECTLCMD} get nodes
 
 echo "Please configure ${TLSSAN} to resolve to ${SERVER_IP}"
