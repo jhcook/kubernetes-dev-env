@@ -24,16 +24,14 @@
 
 # shellcheck source=/dev/null
 source env.sh
-# shellcheck disable=SC2086
-source "$(dirname $0)/localenv.sh"
+source "$(dirname "$0")/localenv.sh"
 
 set -o errexit
 
-$(which kubectl) config delete-context "${NAME}-rke2-cluster" || /usr/bin/true
-$(which kubectl) config delete-cluster "${NAME}-rke2-cluster" || /usr/bin/true
+$(which kubectl) config delete-context "${NAME:-generic}-rke2-cluster" || /usr/bin/true
 
 for node in $(multipass list --format=json | \
-              jq -r ".list[] | select(.name | match(\"${NAME}-rke2-*\")) | .name")
+              jq -r ".list[] | select(.name | match(\"${NAME:-generic}-rke2-*\")) | .name")
 do
     echo "Deleting: ${node}"
     multipass delete "${node}" --purge || /usr/bin/true
