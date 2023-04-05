@@ -65,7 +65,7 @@ fi
 
 # Set KUBECTLCMD to local binary if found in PATH. Otherwise, use the the
 # Multipass primary master.
-if command -v kubectl
+if command -v kubectl >/dev/null 2>&1
 then
     KUBECTLCMD="$(command -v kubectl)"
 else
