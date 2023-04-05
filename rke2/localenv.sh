@@ -62,3 +62,12 @@ then
 else
     CLOUD_INIT_INSTALL="INSTALL_RKE2_CHANNEL=${RKE2_CHANNEL}"
 fi
+
+# Set KUBECTLCMD to local binary if found in PATH. Otherwise, use the the
+# Multipass primary master.
+if command -v kubectl
+then
+    KUBECTLCMD="$(command -v kubectl)"
+else
+    KUBECTLCMD="${MULTIPASSCMD} exec ${NAME}-rke2-master-1 -- /var/lib/rancher/rke2/bin/kubectl --kubeconfig /etc/rancher/rke2/rke2.yaml"
+fi
