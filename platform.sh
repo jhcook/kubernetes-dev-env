@@ -103,11 +103,10 @@ then
         RUNNING=false
     fi
 elif [ "${RUNTIME}" = "rke2" ]
-    then
-        alias rke2="multipass"
-        MULTIPASSCMD="$(command -v multipass)"
-        KUBECTL="$(command -v kubectl)"
-        RUNNING=true
+then
+    alias rke2="multipass"
+    MULTIPASSCMD="$(command -v multipass)"
+    RUNNING=false
 else
     alias kubectl="kubectl --kubeconfig=kubeconfig --insecure-skip-tls-verify=true"
     #shellcheck disable=SC2034
