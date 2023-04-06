@@ -186,14 +186,14 @@ then
         "${LOCALKUBECONFIG}"
     chmod 0600 "${LOCALKUBECONFIG}"
 
-    "${KUBECTLCMD}" config delete-context "${NAME}-rke-cluster" || /usr/bin/true
+    "${KUBECTLCMD}" config delete-context "${NAME}-rke2-cluster" || /usr/bin/true
     export KUBECONFIG="${KUBECONFIG:-${HOME}/.kube/config}:${LOCALKUBECONFIG}"
     if [ ! -d "$(dirname "${KUBECONFIG%%:*}")" ]
     then
         mkdir "$(dirname "${KUBECONFIG%%:*}")"
     fi
     "${KUBECTLCMD}" config view --flatten > "${KUBECONFIG%%:*}"
-    "${KUBECTLCMD}" config set-context "${NAME}-rke-cluster" --namespace default
+    "${KUBECTLCMD}" config set-context "${NAME}-rke2-cluster" --namespace default
 else
     cat << __EOF__
 
