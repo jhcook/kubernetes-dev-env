@@ -1,5 +1,5 @@
-cert.pem
 venv
-debug.log
+private
+ocp/debug.log
 app/microservices-demo
 ingress/nginx/kubernetes-ingress
