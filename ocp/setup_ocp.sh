@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# Copyright 2022 Justin Cook
+# Copyright 2022-2023 Justin Cook
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to
@@ -35,12 +35,25 @@ set -o errexit nounset
 # shellcheck source=/dev/null
 . env.sh
 
+# The PID placed in the background
+WPID=0
+
+cleanup() {
+  kill -9 ${WPID}
+}
+trap cleanup INT EXIT
+
+# Setup crc
 crc setup
-crc config set cpus 6
+crc config set cpus 8
 crc config set memory 30208
 crc config set disk-size 100
 crc config set enable-cluster-monitoring true
+crc config set kubeadmin-password kubeadmin
+crc config set pull-secret-file "$(pwd)/private/pull-secret.txt"
+crc config set nameserver "$(awk '/^nameserver\ /{print$2}' /etc/resolv.conf)"
 
+# If using a proxy, ensure to configure CRC appropriately. 
 if [ -n "${http_proxy-}" ]
 then
   crc config set http-proxy "${http_proxy}"
@@ -56,99 +69,80 @@ then
   crc config set no-proxy "${no_proxy}"
 fi
 
-if [ -f "cert.pem" ]
+# If the proxy is filtering TLS, we need to insert the CA
+if [ -f "$(pwd)/private/cert.pem" ]
 then
-  crc config set proxy-ca-file "$(pwd)/cert.pem"
+  crc config set proxy-ca-file "$(pwd)/private/cert.pem"
 fi
 
-#shellcheck disable=SC2034
-SSH_COM=$(paste -s -d ' ' - << __EOF__
+# Configure the pull-secret-file
+if [ -f "$(pwd)/private/pull-secret.txt" ]
+then
+  crc config set pull-secret-file "$(pwd)/private/pull-secret.txt"
+fi
+
+SSH_COM="$(paste -s -d ' ' - << __EOF__
 ssh
 -i ~/.crc/machines/crc/id_ecdsa
 -o StrictHostKeyChecking=no
 -o IdentitiesOnly=yes
 -o ConnectTimeout=3
 -p 2222
-core@$(crc ip)
+core@\$(crc ip)
 __EOF__
-)
+)"
 
-# tl;dr: crc start is a long running process. So backoff and wait then reenter
-# if interrupted.
-#
-# If the shell receives a signal, this needs to be handled by a trap. As such,
-# run the process in the background and wait until completion of user-provided
-# configuration of trapping signals.
+# tl;dr: crc start is a long running process. So start in the background,
+# do some hack configuration that should be completely unnecessry, and wait.
 
-watchdog() {
-  sleep 900
-  kill -ALRM $$
-}
+nohup crc start --log-level=debug >ocp/debug.log 2>&1 &
+WPID=$!
 
-WPID=0
-INJECTED=false
-while : 
+# If cert.cer exists, then add it as a root ca on the host.
+while :
 do
-  if ! ps -p ${WPID} >/dev/null
+  # Check to see if the machine's key is available
+  if [ ! -f "${HOME}/.crc/machines/crc/id_ecdsa" ]
   then
-    crc start --log-level debug 2>debug.log &
-    WPID=$!
-    trap 'kill -9 ${WPID}' EXIT INT TERM
+    echo "Waiting for ${HOME}/.crc/machines/crc/id_ecdsa"
+    sleep 2
+    continue
   fi
-  # If cert.cer exists, then add it as a root ca on the host.
-  if [ -f "cert.cer" ] && [ ${INJECTED} = false ]
+  SSHCMD="$(eval echo "${SSH_COM}")"
+  # Check if we can successfully connect
+  if ! ${SSHCMD} "whoami" 2> >(printer) > >(printer)
   then
-    while :
-    do
-      # Check to see if the machine's key is available
-      if [ ! -f "${HOME}/.crc/machines/crc/id_ecdsa" ]
-      then
-        echo "Waiting for ${HOME}/.crc/machines/crc/id_ecdsa"
-        sleep 2
-        continue
-      fi
-      # Copy cert.cer to the machine and restart update-ca-trust service
-      if < cert.cer ${SSH_COM} \
-      "sudo bash -c \"cat - >/etc/pki/ca-trust/source/anchors/adguard.cer\" ; \
-      sudo systemctl restart coreos-update-ca-trust.service" 2> >(printer) > >(printer)
-      then
-        INJECTED=true
-        printer "cert.cer added to bundle\n"
-        break
-      fi
-    done
+    sleep 2
+    continue
   fi
-  printer "Waiting on crc startup\n"
-  watchdog &
-  trap "printer \"Giving up after fifteen minutes\n\" ; exit 128" ALRM
-  wait ${WPID}
-  break
+  # Check if already exists on the machine
+  if ${SSHCMD} "sudo ls /etc/pki/ca-trust/source/anchors/devca.cer" \
+  2> >(printer) > >(printer)
+  then
+    break
+  fi
+  # Copy cert.cer to the machine and restart update-ca-trust service
+  if < "$(pwd)/private/cert.cer" ${SSHCMD} "$(cat - << __EOF__
+sudo bash -c "cat - >/etc/pki/ca-trust/source/anchors/devca.cer"
+sudo systemctl restart coreos-update-ca-trust.service
+#sudo systemctl restart crio
+#sudo systemctl restart kubelet
+__EOF__
+)" 2> >(printer) > >(printer)
+  then
+    printer "cert.cer added to bundle\n"
+    break
+  fi
 done
-trap - EXIT INT TERM ALRM
+
+# Wait on `crc start` to complete
+wait ${WPID}
 
 #shellcheck disable=SC2046
 eval $(crc oc-env)
 
-#shellcheck disable=SC2046
-eval $(crc console --credentials | grep kubeadmin | awk -F"'" '{print $2}')
+# Login to OpenShift
+oc login -u kubeadmin -p kubeadmin https://api.crc.testing:6443
 
 # Enable cluster monitoring of user namespaces
 kubectl apply -f ocp/cluster-monitoring-config.yaml
-
-# We are recreating the registries config file and restarting associated
-# services at the same time we are adding the integrated registry as insecure.
-
-#cat << __EOF__ | ${SSH_COM} "sudo bash -c \"cat - > /etc/containers/registries.conf\""
-#unqualified-search-registries = ['registry.access.redhat.com', 'docker.io', 'image-registry.openshift-image-registry.svc:5000']
-#prefix = ""
-
-#[[registry]]
-#  location = "image-registry.openshift-image-registry.svc:5000"
-#  insecure = true
-#  blocked = false
-#  mirror-by-digest-only = false
-#  prefix = ""
-#__EOF__
-
-#${SSH_COM} "sudo systemctl restart crio"
-#${SSH_COM} "sudo systemctl restart kubelet"

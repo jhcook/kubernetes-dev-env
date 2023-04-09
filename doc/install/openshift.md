@@ -50,6 +50,31 @@ $ kubectl apply -f ./ocp/cluster-monitoring-config.yaml
 configmap/cluster-monitoring-config created
 ```
 
+## Troubleshooting
+
+To gain access to the machine, try the following ssh command:
+
+```
+$ ssh -i '~/.crc/machines/crc/id_ecdsa' -o StrictHostKeyChecking=no -o IdentitiesOnly=yes -o ConnectTimeout=3 -p 2222 core@$(crc ip)
+Red Hat Enterprise Linux CoreOS 412.86.202303211731-0
+  Part of OpenShift 4.12, RHCOS is a Kubernetes native operating system
+  managed by the Machine Config Operator (`clusteroperator/machine-config`).
+
+WARNING: Direct SSH access to machines is not recommended; instead,
+make configuration changes via `machineconfig` objects:
+  https://docs.openshift.com/container-platform/4.12/architecture/architecture-rhcos.html
+
+---
+[core@crc-8tnb7-master-0 ~]$ 
+```
+
+Accessing the OpenShift cluster by CLI on the machine can be achieved as
+follows:
+
+```
+[core@crc-8tnb7-master-0 ~]$ oc --context admin --cluster crc --kubeconfig /opt/kubeconfig get deploy -A
+...
+```
 ## References
 
 * [Installing OCP on any platform](https://docs.openshift.com/container-platform/4.10/installing/installing_platform_agnostic/installing-platform-agnostic.html)
