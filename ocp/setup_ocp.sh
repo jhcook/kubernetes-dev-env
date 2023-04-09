@@ -39,7 +39,7 @@ set -o errexit nounset
 WPID=0
 
 cleanup() {
-  kill -9 ${WPID}
+  kill -9 ${WPID} 2> >(printer) > >(printer)
 }
 trap cleanup INT EXIT
 
@@ -99,43 +99,45 @@ nohup crc start --log-level=debug >ocp/debug.log 2>&1 &
 WPID=$!
 
 # If cert.cer exists, then add it as a root ca on the host.
-while :
+# Check to see if the machine's key is available
+echo "Waiting for ${HOME}/.crc/machines/crc/id_ecdsa"
+until [ -f "${HOME}/.crc/machines/crc/id_ecdsa" ]
 do
-  # Check to see if the machine's key is available
-  if [ ! -f "${HOME}/.crc/machines/crc/id_ecdsa" ]
-  then
-    echo "Waiting for ${HOME}/.crc/machines/crc/id_ecdsa"
-    sleep 2
-    continue
-  fi
-  SSHCMD="$(eval echo "${SSH_COM}")"
-  # Check if we can successfully connect
-  if ! ${SSHCMD} "whoami" 2> >(printer) > >(printer)
-  then
-    sleep 2
-    continue
-  fi
-  # Check if already exists on the machine
-  if ${SSHCMD} "sudo ls /etc/pki/ca-trust/source/anchors/devca.cer" \
-  2> >(printer) > >(printer)
-  then
-    break
-  fi
+  sleep 2
+done
+
+SSHCMD="$(eval echo "${SSH_COM}")"
+
+# Check if we can successfully connect
+echo "Checking connection to machine"
+until ${SSHCMD} "whoami" 2> >(printer) > >(printer)
+do
+  sleep 2
+done
+
+# Check if already exists on the machine
+echo "Looking for cert.cer on machine"
+if ${SSHCMD} "sudo ls /etc/pki/ca-trust/source/anchors/devca.cer" \
+2> >(printer) > >(printer)
+then
+  echo "Found cert.cer on machine"
+else
   # Copy cert.cer to the machine and restart update-ca-trust service
+  echo "Copying cert.cer to machine"
   if < "$(pwd)/private/cert.cer" ${SSHCMD} "$(cat - << __EOF__
 sudo bash -c "cat - >/etc/pki/ca-trust/source/anchors/devca.cer"
 sudo systemctl restart coreos-update-ca-trust.service
 #sudo systemctl restart crio
 #sudo systemctl restart kubelet
 __EOF__
-)" 2> >(printer) > >(printer)
+  )" 2> >(printer) > >(printer)
   then
     printer "cert.cer added to bundle\n"
-    break
   fi
-done
+fi
 
 # Wait on `crc start` to complete
+echo "Waiting for crc to finish start"
 wait ${WPID}
 
 #shellcheck disable=SC2046
