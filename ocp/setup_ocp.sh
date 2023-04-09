@@ -142,7 +142,8 @@ wait ${WPID}
 eval $(crc oc-env)
 
 # Login to OpenShift
-oc login -u kubeadmin -p kubeadmin https://api.crc.testing:6443
+oc login -u kubeadmin -p kubeadmin --insecure-skip-tls-verify=true \
+https://api.crc.testing:6443
 
 # Enable cluster monitoring of user namespaces
 kubectl apply -f ocp/cluster-monitoring-config.yaml
