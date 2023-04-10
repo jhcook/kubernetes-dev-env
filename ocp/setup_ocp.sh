@@ -41,7 +41,13 @@ WPID=0
 cleanup() {
   kill -9 ${WPID} 2> >(printer) > >(printer)
 }
-trap cleanup INT EXIT
+trap cleanup EXIT
+
+smashit() {
+  cleanup
+  crc cleanup
+}
+trap smashit INT
 
 # Setup crc
 crc setup
