@@ -100,39 +100,42 @@ WPID=$!
 
 # If cert.cer exists, then add it as a root ca on the host.
 # Check to see if the machine's key is available
-echo "Waiting for ${HOME}/.crc/machines/crc/id_ecdsa"
-until [ -f "${HOME}/.crc/machines/crc/id_ecdsa" ]
-do
-  sleep 2
-done
-
-SSHCMD="$(eval echo "${SSH_COM}")"
-
-# Check if we can successfully connect
-echo "Checking connection to machine"
-until ${SSHCMD} "whoami" 2> >(printer) > >(printer)
-do
-  sleep 2
-done
-
-# Check if already exists on the machine
-echo "Looking for cert.cer on machine"
-if ${SSHCMD} "sudo ls /etc/pki/ca-trust/source/anchors/devca.cer" \
-2> >(printer) > >(printer)
+if [ -f "$(pwd)/private/cert.cer" ]
 then
-  echo "Found cert.cer on machine"
-else
-  # Copy cert.cer to the machine and restart update-ca-trust service
-  echo "Copying cert.cer to machine"
-  if < "$(pwd)/private/cert.cer" ${SSHCMD} "$(cat - << __EOF__
+  echo "Waiting for ${HOME}/.crc/machines/crc/id_ecdsa"
+  until [ -f "${HOME}/.crc/machines/crc/id_ecdsa" ]
+  do
+    sleep 2
+  done
+
+  SSHCMD="$(eval echo "${SSH_COM}")"
+
+  # Check if we can successfully connect
+  echo "Waiting for connection to machine"
+  until ${SSHCMD} "whoami" 2> >(printer) > >(printer)
+  do
+    sleep 2
+  done
+
+  # Check if already exists on the machine
+  echo "Looking for cert.cer on machine"
+  if ${SSHCMD} "sudo ls /etc/pki/ca-trust/source/anchors/devca.cer" \
+  2> >(printer) > >(printer)
+  then
+    echo "Found cert.cer on machine"
+  else
+    # Copy cert.cer to the machine and restart update-ca-trust service
+    echo "Copying cert.cer to machine"
+    if < "$(pwd)/private/cert.cer" ${SSHCMD} "$(cat - << __EOF__
 sudo bash -c "cat - >/etc/pki/ca-trust/source/anchors/devca.cer"
 sudo systemctl restart coreos-update-ca-trust.service
 #sudo systemctl restart crio
 #sudo systemctl restart kubelet
 __EOF__
-  )" 2> >(printer) > >(printer)
-  then
-    printer "cert.cer added to bundle\n"
+    )" 2> >(printer) > >(printer)
+    then
+      printer "cert.cer added to bundle\n"
+    fi
   fi
 fi
 
@@ -149,3 +152,6 @@ https://api.crc.testing:6443
 
 # Enable cluster monitoring of user namespaces
 kubectl apply -f ocp/cluster-monitoring-config.yaml
+
+# Show the user credentials
+crc console --credentials
