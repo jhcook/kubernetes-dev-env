@@ -26,9 +26,19 @@ $ gh repo clone jhcook/kubernetes-dev-env
 ## Dependencies
 
 This project requires access to a Kubernetes cluster. This code supports
-instantiating [Minikube](https://minikube.sigs.k8s.io/docs/start/), [Kind](https://kind.sigs.k8s.io), and [OpenShift Local](https://console.redhat.com/openshift/create/local). 
+instantiating:
+* [Minikube](https://minikube.sigs.k8s.io/docs/start/)
+* [Kind](https://kind.sigs.k8s.io)
+* [OpenShift Local](https://console.redhat.com/openshift/create/local)
+* [Rancher Desktop](https://rancherdesktop.io)
+* [Microk8s](https://microk8s.io)
 
 ## Configuration
 
 Configuring the code is done via the `env.sh` file in the root folder. A
 description of each configuration item can be found in [configuration](./operations/configuration.md).
+
+Due to limitations with scope of and use of aliases in Bash code, platform-
+specific generic aliases and environment data are kept in `platform.sh`.
+
+Setting 

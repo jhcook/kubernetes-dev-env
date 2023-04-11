@@ -13,7 +13,7 @@ It features a sidecar that provides TCP ESTABLISHED connections using
 conntrack. This sidecar is featured in an example with Keda to scale objects
 based on connection rate. This can be found in `hpa` directory. 
 
-The stack provides the latest Rancher release (2.6.5) and Calico with an option
+The stack provides the latest Rancher release (2.7.1) and Calico with an option
 for Calico Enterprise (3.13) -- for those with appropriate credentials.
 
 ## Kubernetes Support
@@ -59,7 +59,7 @@ Prometheus metrics and Grafana dashboards; and install Boutique.
 
 Create a Minikube cluster enabling ingress and ingress-dns addon, set the
 cidr range to 172.16.0.0/16, and set the Kubernetes version.
-* https://www.suse.com/suse-rancher/support-matrix/all-supported-versions/rancher-v2-6-3/
+* https://www.suse.com/suse-rancher/support-matrix/all-supported-versions/rancher-v2-7-1/
 * https://minikube.sigs.k8s.io/docs/drivers/hyperkit/
 
 ### Configure .test TLD to to use Minikube
@@ -83,15 +83,15 @@ minikube config set memory 4096
 minikube node add --worker
 ```
 ## Install Rancher
-* https://rancher.com/docs/rancher/v2.6/en/installation/install-rancher-on-k8s/
+* https://ranchermanager.docs.rancher.com/pages-for-subheaders/install-upgrade-on-a-kubernetes-cluster
 
 ```
 bash install_rancher.sh
 ```
 
 ## Install / Configure Prometheus and Grafana 
-* https://rancher.com/docs/rancher/v2.6/en/monitoring-alerting/guides/customize-grafana/
-* https://rancher.com/docs/rancher/v2.6/en/monitoring-alerting/guides/persist-grafana/
+* https://ranchermanager.docs.rancher.com/how-to-guides/advanced-user-guides/monitoring-alerting-guides/customize-grafana-dashboard
+* https://ranchermanager.docs.rancher.com/how-to-guides/advanced-user-guides/monitoring-alerting-guides/create-persistent-grafana-dashboard
 * https://www.tigera.io/blog/monitoring-calico-with-prometheus-and-grafana/
 * https://www.tigera.io/blog/how-to-monitor-calicos-ebpf-data-plane-for-proactive-cluster-management/
 * https://projectcalico.docs.tigera.io/maintenance/monitor/monitor-component-metrics
