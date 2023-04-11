@@ -35,7 +35,7 @@ RKE2_CHANNEL="stable"
 # How many master nodes to create
 MASTER_NODE_COUNT="1"
 # How many compute nodes to create
-AGENT_NODE_COUNT="2"
+AGENT_NODE_COUNT="3"
 # How many CPUs to allocate to each machine
 MASTER_NODE_CPU="2"
 AGENT_NODE_CPU="2"
