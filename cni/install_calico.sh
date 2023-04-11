@@ -20,10 +20,12 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 #
-# Install the Tigera Calico operator and deploy Calico CNI
+# Install the Tigera Calico Helm chart and deploy Calico CNI
 # Watch pods until calico-kube-controllers is deployed
 #
 # Requires: kubectl
+#
+# https://docs.tigera.io/calico/latest/getting-started/kubernetes/helm
 #
 # Author: Justin Cook
 
@@ -32,52 +34,34 @@ set -o errexit
 # shellcheck source=/dev/null
 . env.sh
 
-CALICOSOURCE="https://raw.githubusercontent.com/projectcalico/calico/v3.25.0/manifests/tigera-operator.yaml"
+# Add the appropriate Helm repos and update
+helm repo add projectcalico https://docs.tigera.io/calico/charts
+helm repo update
 
-# Install Tigera operator. In order to compensate for previous runs, remove the
-# previous applied resources. This is not ideal, but Calico uses more space for
-# CRDs than is allowed by apply.
-# TODO: switch to Helm install https://docs.tigera.io/calico/latest/getting-started/kubernetes/helm
-kubectl create -f ${CALICOSOURCE} --dry-run=client -o yaml | \
-kubectl delete -f - || /usr/bin/true
-
-kubectl create -f ${CALICOSOURCE}
-
-# Wait on the operator to run
-kubectl rollout status deploy/tigera-operator -n tigera-operator
-
-# Install Calico using Installation kind
-cat <<EOF | kubectl apply -f -
-apiVersion: operator.tigera.io/v1
-kind: Installation
-metadata:
-  name: default
-spec:
+# Create values.yaml
+cat > "$(pwd)/cni/values.yaml" <<EOF
+installation:
+  cni:
+    type: Calico
   calicoNetwork:
-    containerIPForwarding: Enabled
     ipPools:
     - blockSize: 26
       cidr: ${POD_NET_CIDR}
-      natOutgoing: Enabled
       encapsulation: VXLANCrossSubnet
+      natOutgoing: Enabled
       nodeSelector: all()
-  typhaMetricsPort: 9093
-
----
-
-# This section configures the Calico API server.
-# For more information, see: https://projectcalico.docs.tigera.io/v3.22/reference/installation/api#operator.tigera.io/v1.APIServer
-apiVersion: operator.tigera.io/v1
-kind: APIServer 
-metadata: 
-  name: default 
-spec: {}
 EOF
 
+# Install Calico
+helm upgrade --install calico projectcalico/tigera-operator \
+  --version v3.25.1 \
+  -f "$(pwd)/cni/values.yaml" \
+  --namespace tigera-operator \
+  --create-namespace
+
 # Wait until the Installation is progressing
-while :
+until kubectl get tigerastatus/calico >/dev/null 2>&1
 do
-  kubectl get tigerastatus/calico 2>/dev/null && break
   sleep 1
 done
 
@@ -86,6 +70,10 @@ kubectl get pods -A -w &
 watch_pid="$!"
 
 # Wait on calico-kube-controllers deployment
+until kubectl get deploy/calico-kube-controllers -n calico-system
+do
+  sleep 1
+done
 kubectl rollout status deploy/calico-kube-controllers -n calico-system
 
 kill -15 ${watch_pid}
