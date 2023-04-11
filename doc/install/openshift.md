@@ -7,7 +7,7 @@ environment variables, e.g., `unset $(compgen -e | grep -i proxy)`.
 
 1. [Download and install OpenShift Local](https://console.redhat.com/openshift/create/local)
 
-2. [Setup and start OpenShift Local](https://access.redhat.com/documentation/en-us/red_hat_openshift_local/2.5/html/getting_started_guide/using_gsg)
+2. [Setup and start OpenShift Local](https://access.redhat.com/documentation/en-us/red_hat_openshift_local/2.15/html/getting_started_guide/using_gsg)
 
 ## Quickstart
 
