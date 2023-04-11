@@ -23,6 +23,7 @@
 # Install NGINX ingress controller
 # https://docs.nginx.com/nginx-ingress-controller/installation/installation-with-helm/
 # https://docs.rancherdesktop.io/how-to-guides/setup-NGINX-Ingress-Controller
+# https://artifacthub.io/packages/helm/bitnami/nginx-ingress-controller
 #
 # Author: Justin Cook
 
@@ -31,49 +32,24 @@ set -o errexit
 # shellcheck source=/dev/null
 . env.sh
 
-ORIG_WRK_DIR="${PWD}"
-THIS_WRK_DIR="ingress/nginx"
+# Clone the NGINX controller repository for CRDs and Helm deployments
 
-# Clone the NGINX controller repository for CRDs
-
-cd "${THIS_WRK_DIR}"
+cd "${K8STMPDIR}"
 if [ -d "kubernetes-ingress" ]
 then
     cd kubernetes-ingress
-    git pull origin v3.0.2
+    git pull origin v3.1.0
     cd ..
 else
-    git clone https://github.com/nginxinc/kubernetes-ingress.git --branch v3.0.2
-    #cd kubernetes-ingress/deployments/helm-chart
+    git clone https://github.com/nginxinc/kubernetes-ingress.git --branch v3.1.0
 fi
+cd kubernetes-ingress/deployments/helm-chart
 
-# Ignore the cloned directory above with this repo's git.
-if ! grep "^${THIS_WRK_DIR}/kubernetes-ingress$" "${ORIG_WRK_DIR}/.gitignore"
-then
-    #shellcheck disable=SC2086
-    if [ -n "$(tail -c1 ${ORIG_WRK_DIR}/.gitignore)" ]
-    then
-        echo "" >> "${ORIG_WRK_DIR}/.gitignore"
-    fi
-    echo "${THIS_WRK_DIR}/kubernetes-ingress" >> "${ORIG_WRK_DIR}/.gitignore"
-fi
-
-if [ "${RUNTIME}" = "rdctl" ]
-then
-    helm upgrade --install ingress-nginx ingress-nginx \
-    --repo https://kubernetes.github.io/ingress-nginx \
-    --namespace ingress-nginx --create-namespace
-else
-    # Add the helm repo
-    helm repo add nginx-stable https://helm.nginx.com/stable
-    helm repo update
-
-    # Install the chart from the NGINX chart repository
-    helm upgrade --install nginx-ingress nginx-stable/nginx-ingress \
-         --set rbac.create=true \
-         --namespace ingress-nginx \
-         --create-namespace
-fi
+helm upgrade --install ingress-nginx . \
+    --set nameOverride=ingress-nginx \
+    --set rbac.create=true \
+    --namespace ingress-nginx \
+    --create-namespace
 
 # Wait for NGINX to become available
 kubectl rollout status deployment/ingress-nginx-controller -n ingress-nginx
