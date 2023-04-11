@@ -32,6 +32,7 @@ instantiating:
 * [OpenShift Local](https://console.redhat.com/openshift/create/local)
 * [Rancher Desktop](https://rancherdesktop.io)
 * [Microk8s](https://microk8s.io)
+* [RKE2](https://docs.rke2.io)
 
 ## Configuration
 
