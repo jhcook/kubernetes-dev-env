@@ -56,8 +56,7 @@ fi
 
 if ! grep "^${THIS_WRK_DIR}/microservices-demo$" "${ORIG_WRK_DIR}/.gitignore"
 then
-    #shellcheck disable=SC2086
-    if [ -n "$(tail -c1 ${ORIG_WRK_DIR}/.gitignore)" ]
+    if [ -n "$(tail -c1 "${ORIG_WRK_DIR}/.gitignore")" ]
     then
         echo "" >> "${ORIG_WRK_DIR}/.gitignore"
     fi
@@ -73,20 +72,14 @@ do
   kubectl rollout status "${deploy}"
 done
 
-if [ "${RUNTIME}" = "minikube" ]
+kubectl apply -f "${ORIG_WRK_DIR}/app/frontend-ingress.yaml"
+
+if [ "${RUNTIME}" != "minikube" ]
 then
-  BOUTIQUE="$(minikube ip):$(kubectl get service frontend-external -o \
-            jsonpath='{.spec.ports[*].nodePort}{"\n"}')"
-else
-  # Get the IP:Port and display to the user
-  #BOUTIQUE=$(kubectl get service frontend-external -o \
-  #           jsonpath='{.spec.clusterIP}{":"}{.spec.ports[*].nodePort}{"\n"}')
-  BOUTIQUE="127.0.0.1"
-  printf "\nPlease forward service/frontend to localhost and for example:\n"
+  printf "\nPlease configure name resolution boutique.test to master's IP.\n"
 fi
 
-printf "\n\nOpen browser to: "
-printf "http://%s\n\n" "${BOUTIQUE}"
+printf "\nOpen browser to: http://boutique.test\n\n"
 
 # Run locust
 cd src/loadgenerator || exit
