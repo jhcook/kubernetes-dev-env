@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# Copyright 2022 Justin Cook
+# Copyright 2022-2023 Justin Cook
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to
@@ -30,21 +30,20 @@ set -o errexit
 . env.sh
 
 ORIG_WRK_DIR="$(pwd)"
-THIS_WRK_DIR="app"
 
 # Check if the virtualenv exists. If not, create it.
-if [ ! -d "venv" ]
+if [ ! -d "${K8STMPDIR}/venv-locust" ]
 then
-  virtualenv venv
+  virtualenv "${K8STMPDIR}/venv-locust"
 fi
 
 # Activate the virtualenv and install locust
 # shellcheck source=/dev/null
-source ./venv/bin/activate
+source "${K8STMPDIR}/venv-locust/bin/activate"
 pip install locust
 
 # Check if the boutique, aka microservices-demo, exists. If not, clone it.
-cd "${THIS_WRK_DIR}"
+cd "${K8STMPDIR}"
 if [ ! -d "microservices-demo" ]
 then
   git clone https://github.com/GoogleCloudPlatform/microservices-demo.git
@@ -52,15 +51,6 @@ then
 else
   cd microservices-demo
   git pull
-fi
-
-if ! grep "^${THIS_WRK_DIR}/microservices-demo$" "${ORIG_WRK_DIR}/.gitignore"
-then
-    if [ -n "$(tail -c1 "${ORIG_WRK_DIR}/.gitignore")" ]
-    then
-        echo "" >> "${ORIG_WRK_DIR}/.gitignore"
-    fi
-    echo "${THIS_WRK_DIR}/microservices-demo" >> "${ORIG_WRK_DIR}/.gitignore"
 fi
 
 # Install the boutique.
@@ -73,6 +63,8 @@ do
 done
 
 kubectl apply -f "${ORIG_WRK_DIR}/app/frontend-ingress.yaml"
+kubectl annotate ingress frontend-ingress kubernetes.io/ingress.class=nginx \
+  --overwrite=true --dry-run=client -o yaml | kubectl apply -f -
 
 if [ "${RUNTIME}" != "minikube" ]
 then
