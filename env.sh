@@ -29,7 +29,8 @@ set -o nounset errexit
 shopt -s extglob
 shopt -s expand_aliases
 
-# Set the runtime. Supported options are minikube, crc, and rdctl.
+# Set the runtime. Supported options are minikube, crc, rdctl, microk8s, and
+# rke2.
 export RUNTIME="minikube"
 #export RUNTIME="crc"
 #export RUNTIME="rdctl"
@@ -38,6 +39,10 @@ export RUNTIME="minikube"
 
 # Set loglevel to screen. The valid options are INFO and DEBUG
 export LOGLEVEL="DEBUG"
+
+# The temp directory to store dynamically created and downloaded artefacts
+K8STMPDIR="$(pwd)/tmp"
+export K8STMPDIR
 
 # Pod network CIDR
 export POD_NET_CIDR="172.16.0.0/16"
