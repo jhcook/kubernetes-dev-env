@@ -70,31 +70,33 @@ then
     else
         RUNNING=false
     fi
-        alias kubectl="minikube kubectl --"
+    # shellcheck disable=SC2262
+    alias kubectl="minikube kubectl --"
 elif [ "${RUNTIME}" = "crc" ]
 then
     if (which crc && crc status)
-then
-    RUNNING=true
-    #shellcheck disable=SC2046
-    eval $(crc oc-env)
-fi
+    then
+        RUNNING=true
+        #shellcheck disable=SC2046
+        eval $(crc oc-env)
+    fi
     alias kubectl="oc"
 elif [ "${RUNTIME}" = "rdctl" ]
 then
-    if rdctl shell "id" 2>/dev/null
-    then
-        case :$PATH: in 
+    case :$PATH: in 
         *:$HOME/.rd/bin:*) ;; 
         *) export PATH=$HOME/.rd/bin:$PATH ;;
-        esac
+    esac
+    if rdctl shell "id" 2>/dev/null
+    then
+        kubectl config set-context rancher-desktop
         RUNNING=true
     else
         RUNNING=false
     fi
 elif [ "${RUNTIME}" = "microk8s" ]
 then
-    #alias kubectl="microk8s kubectl --"
+    alias kubectl='microk8s kubectl'
     if microk8s status 2>/dev/null
     then
         RUNNING=true
@@ -106,6 +108,7 @@ elif [ "${RUNTIME}" = "rke2" ]
 then
     alias rke2="multipass"
     MULTIPASSCMD="$(command -v multipass)"
+    export MULTIPASSCMD
     RUNNING=false
 else
     alias kubectl="kubectl --kubeconfig=kubeconfig --insecure-skip-tls-verify=true"
