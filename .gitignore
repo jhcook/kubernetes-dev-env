@@ -1,5 +1,3 @@
 venv
 private
-ocp/debug.log
-app/microservices-demo
-ingress/nginx/kubernetes-ingress
+tmp
