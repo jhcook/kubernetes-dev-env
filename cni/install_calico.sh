@@ -39,7 +39,7 @@ helm repo add projectcalico https://docs.tigera.io/calico/charts
 helm repo update
 
 # Create values.yaml
-cat > "$(pwd)/cni/values.yaml" <<EOF
+cat > "${K8STMPDIR}/cni-values.yaml" <<EOF
 installation:
   cni:
     type: Calico
@@ -55,7 +55,7 @@ EOF
 # Install Calico
 helm upgrade --install calico projectcalico/tigera-operator \
   --version v3.25.1 \
-  -f "$(pwd)/cni/values.yaml" \
+  -f "${K8STMPDIR}/cni-values.yaml" \
   --namespace tigera-operator \
   --create-namespace
 
