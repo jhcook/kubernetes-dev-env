@@ -101,7 +101,7 @@ __EOF__
 # tl;dr: crc start is a long running process. So start in the background,
 # do some hack configuration that should be completely unnecessry, and wait.
 
-nohup crc start --log-level=debug >ocp/debug.log 2>&1 &
+nohup crc start --log-level=debug > "${TMPDIR}/ocp-debug.log" 2>&1 &
 WPID=$!
 
 # If cert.cer exists, then add it as a root ca on the host.
