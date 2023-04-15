@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# Copyright 2022 Justin Cook
+# Copyright 2022-2023 Justin Cook
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to
@@ -34,7 +34,8 @@ kubectl apply -f https://github.com/jetstack/cert-manager/releases/download/v1.1
 
 # Add the appropriate Helm repos and update
 helm repo add jetstack https://charts.jetstack.io
-helm repo add rancher-stable https://releases.rancher.com/server-charts/stable
+#helm repo add rancher-stable https://releases.rancher.com/server-charts/stable
+helm repo add rancher-latest https://releases.rancher.com/server-charts/latest
 helm repo update
 
 # Install cert-manager
@@ -43,16 +44,16 @@ helm upgrade --install cert-manager jetstack/cert-manager \
   --create-namespace \
   --version v1.10.2
 
-# Create the cattle-system namespace
-kubectl create namespace cattle-system --dry-run=client -o yaml | \
-  kubectl apply -f -
-
 # Install Rancher
-helm upgrade --install rancher rancher-stable/rancher \
+# https://github.com/rancher/rancher/issues/40331
+# https://artifacthub.io/packages/helm/rancher-latest/rancher
+helm upgrade --install rancher rancher-latest/rancher \
   --namespace cattle-system \
+  --create-namespace \
   --set hostname=rancher.test \
   --set bootstrapPassword=admin \
-  --version 2.7.1
+  --set global.cattle.psp.enabled=false
+  #--version 2.7.2
 
 # Wait for Rancher to become available
 kubectl rollout status deploy/rancher -n cattle-system

@@ -32,23 +32,24 @@ set -o errexit
 . env.sh
 
 # Add the applicable Helm chards to the repo and update
-helm repo add rancher-monitoring-crd http://charts.rancher.io
-helm repo add rancher-monitoring http://charts.rancher.io
+helm repo add rancher-gatekeeper-crd http://charts.rancher.io
+helm repo add rancher-gatekeeper http://charts.rancher.io
 helm repo update
 
-# Create the cattle-gatekeeper-system namespace 
-kubectl create namespace cattle-gatekeeper-system --dry-run=client -o yaml | \
-  kubectl apply -f -
-
-# Install the required charts for rancher-monitoring which is just upstream
-# Prometheus and Grafana operators et al with a bit of configuration
-helm upgrade --install=true --namespace=cattle-gatekeeper-system --timeout=10m0s \
+# Install the required charts for OPA Gatekeeper and CRDs
+helm upgrade --install=true --timeout=10m0s --wait=true \
   --values=https://raw.githubusercontent.com/rancher/charts/release-v2.7/charts/rancher-gatekeeper-crd/101.0.0%2Bup3.9.0/values.yaml \
-  --version=101.0.0+up3.9.0 --wait=true rancher-gatekeeper-crd \
+  --namespace=cattle-gatekeeper-system \
+  --create-namespace \
+  --version=101.0.0+up3.9.0 \
+  rancher-gatekeeper-crd \
   http://charts.rancher.io/assets/rancher-gatekeeper-crd/rancher-gatekeeper-crd-101.0.0+up3.9.0.tgz
-helm upgrade --install=true --namespace=cattle-gatekeeper-system --timeout=10m0s \
+
+helm upgrade --install=true --timeout=10m0s --wait=true \
   --values=https://raw.githubusercontent.com/rancher/charts/release-v2.7/charts/rancher-gatekeeper/101.0.0%2Bup3.9.0/values.yaml \
-  --version=101.0.0+up3.9.0 --wait=true rancher-gatekeeper \
+  --version=101.0.0+up3.9.0 \
+  --namespace=cattle-gatekeeper-system \
+  rancher-gatekeeper \
   http://charts.rancher.io/assets/rancher-gatekeeper/rancher-gatekeeper-101.0.0+up3.9.0.tgz
 
 # Wait for all the deployments to become available
