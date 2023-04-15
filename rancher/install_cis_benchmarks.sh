@@ -20,7 +20,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 #
-# Install Prometheus, Grafana, and configure the monitoring stack
+# Install Rancher CIS Benchmarks with CRDs
 #
 # Resources:
 #  * http://charts.rancher.io/index.yaml
@@ -40,13 +40,18 @@ helm repo add rancher-cis-benchmark http://charts.rancher.io
 helm repo update
 
 # Install CIS Benchmark with CRDs
-helm upgrade --install=true --namespace=cis-operator-system --timeout=10m0s \
-  --version=4.0.0 --create-namespace --wait=true rancher-cis-benchmark-crd \
+helm upgrade --install=true --timeout=10m0s --wait=true \
+  --namespace=cis-operator-system \
+  --create-namespace \
+  --version=4.0.0 \
+  rancher-cis-benchmark-crd \
   http://charts.rancher.io/assets/rancher-cis-benchmark-crd/rancher-cis-benchmark-crd-4.0.0.tgz
 
-helm upgrade --install=true --namespace=cis-operator-system --timeout=10m0s \
+helm upgrade --install=true  --timeout=10m0s --wait=true \
   --values=https://raw.githubusercontent.com/rancher/charts/dev-v2.7/charts/rancher-cis-benchmark/4.0.0/values.yaml \
-  --version=4.0.0 --wait=true rancher-cis-benchmark \
+  --namespace=cis-operator-system \
+  --version=4.0.0 \
+  rancher-cis-benchmark \
   http://charts.rancher.io/assets/rancher-cis-benchmark/rancher-cis-benchmark-4.0.0.tgz
 
 # Wait for all the deployments to become available
