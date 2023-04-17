@@ -23,6 +23,9 @@
 # Author(s): Sebastiaan van Steenis
 #            Justin Cook
 
+# Disable export warnings for the entire file
+# shellcheck disable=SC2034
+
 ## Configurable settings
 # Name for the cluster/configuration files
 NAME=""
