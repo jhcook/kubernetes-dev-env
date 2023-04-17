@@ -32,6 +32,7 @@ IMAGE="jammy"
 RKE2_CHANNEL="stable"
 # RKE2 version
 #RKE2_VERSION="v1.24.12+rke2r1"
+#RKE2_VERSION="v1.25.8+rke2r1"
 # How many master nodes to create
 MASTER_NODE_COUNT="1"
 # How many compute nodes to create
