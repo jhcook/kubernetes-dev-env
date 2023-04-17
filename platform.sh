@@ -26,7 +26,7 @@
 #
 # Author: Justin Cook
 
-if [ "${RUNTIME}" == "minikube" ]
+if [ "${RUNTIME}" = "minikube" ]
 then
 # Installing behind a proxy or VPN can cause problems
 # https://minikube.sigs.k8s.io/docs/handbook/vpn_and_proxy/
@@ -110,8 +110,11 @@ then
     MULTIPASSCMD="$(command -v multipass)"
     export MULTIPASSCMD
     RUNNING=false
+elif [ "${RUNTIME}" = "vagrant" ]
+then
+    :
 else
-    alias kubectl="kubectl --kubeconfig=kubeconfig --insecure-skip-tls-verify=true"
+    alias kubectl="kubectl --insecure-skip-tls-verify=true"
     #shellcheck disable=SC2034
     RUNNING=true
 fi
