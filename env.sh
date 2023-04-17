@@ -36,6 +36,7 @@ export RUNTIME="minikube"
 #export RUNTIME="rdctl"
 #export RUNTIME="microk8s"
 #export RUNTIME="rke2"
+#export RUNTIME="vagrant"
 
 # Set loglevel to screen. The valid options are INFO and DEBUG
 export LOGLEVEL="DEBUG"
