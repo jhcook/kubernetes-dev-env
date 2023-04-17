@@ -1,0 +1,55 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+
+Vagrant.configure("2") do |config|
+
+    config.vm.box = "ubuntu/jammy64"
+    config.vm.provider "virtualbox" do |v|
+        v.memory = 8192
+        v.cpus = 2
+    end
+    config.vm.provision:shell, inline: <<-SHELL
+        echo "root:vagrant" | sudo chpasswd
+        sudo sed -i '/^session    optional     pam_motd\.so/s/^/#/' /etc/pam.d/sshd
+        sudo sed -i 's/^#PrintLastLog yes$/PrintLastLog no/' /etc/ssh/sshd_config
+        sudo systemctl restart sshd
+        sudo timedatectl set-timezone Australia/Sydney
+        sudo echo -e "192.168.123.210\tmaster" >> /etc/hosts
+        sudo echo -e "192.168.123.211\tnode1" >> /etc/hosts
+        sudo echo -e "192.168.123.212\tnode2" >> /etc/hosts
+        sudo echo -e "192.168.123.213\tnode3" >> /etc/hosts
+    SHELL
+
+    config.vm.define "master" do |master|
+        master.vm.hostname = "master"
+        master.vm.network "private_network", ip: "192.168.123.210"
+        #master.vm.network "forwarded_port", guest: 6443, host: 6443, host_ip: "127.0.0.1"
+        master.vm.provision:shell, inline: <<-SHELL
+            sudo sed -i 's/127\.0\.1\.1.*master//' /etc/hosts
+        SHELL
+    end
+
+    config.vm.define "node1" do |node1|
+        node1.vm.hostname = "node1"
+        node1.vm.network "private_network", ip: "192.168.123.211"
+        node1.vm.provision:shell, inline: <<-SHELL
+            sudo sed -i 's/127\.0\.1\.1.*node1//' /etc/hosts
+        SHELL
+    end
+
+    config.vm.define "node2" do |node2|
+        node2.vm.hostname = "node2"
+        node2.vm.network "private_network", ip: "192.168.123.212"
+        node2.vm.provision:shell, inline: <<-SHELL
+            sudo sed -i 's/127\.0\.1\.1.*node2//' /etc/hosts
+        SHELL
+    end
+
+    config.vm.define "node3" do |node2|
+        node2.vm.hostname = "node3"
+        node2.vm.network "private_network", ip: "192.168.123.213"
+        node2.vm.provision:shell, inline: <<-SHELL
+            sudo sed -i 's/127\.0\.1\.1.*node3//' /etc/hosts
+        SHELL
+    end
+end
