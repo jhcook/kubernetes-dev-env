@@ -43,7 +43,7 @@ trap "cd ${OLDPWD}" EXIT
 
 echo "Fetching kubeconfig from master"
 echo "cat /etc/rancher/rke2/rke2.yaml" | ssh master | \
-  sed -E "s|(server: https://)[0-9.]+:([0-9]+)|\1${SRVRIP}:\2|g" | \
+  sed -E "s|(server: https://)[0-9.]+:([0-9]+)|\1${NODEIP}.211:\2|g" | \
   cat - > "${HOME}/.kube/config-vagrant"
 
 echo "Merging and creating context as default for the cluster"
