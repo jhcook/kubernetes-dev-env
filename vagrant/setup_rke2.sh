@@ -95,25 +95,25 @@ cd "$(dirname "$0")"
 trap "cd ${OLDPWD}" EXIT
 
 # Install the primary master
-CONFIGYAML="token: ${TOKEN}\nwrite-kubeconfig-mode: 644\ntls-san: ${TLSSAN}\nnode-external-ip: ${SRVRIP}"
+CONFIGYAML="token: ${TOKEN}\nwrite-kubeconfig-mode: 644\ntls-san: ${TLSSAN}\nnode-ip: ${NODEIP}.211"
 create_rke2_node "${MASTERSRV}"
 
 # Create the URL to add hosts
-URL="https://${SRVRIP}:9345"
+URL="https://${NODEIP}.211:9345"
 
 # Create additional masters
-CONFIGYAML="server: ${URL}\ntoken: ${TOKEN}\nwrite-kubeconfig-mode: 644\ntls-san: ${TLSSAN}"
 for ((i=2; i<=MASTER_NODE_COUNT; i++))
 do
+    CONFIGYAML="server: ${URL}\ntoken: ${TOKEN}\nwrite-kubeconfig-mode: 644\ntls-san: ${TLSSAN}\nnode-ip: ${NODEIP}.$((210+i))"
     create_rke2_node "${MASTERSRV}${i}"
 done
 
 # Create each node
-CONFIGYAML="server: ${URL}\ntoken: ${TOKEN}"
 IRT='INSTALL_RKE2_TYPE="agent"'
 RKE2ROLE="agent"
 
 for ((i=1; i<=AGENT_NODE_COUNT; i++))
 do
+    CONFIGYAML="server: ${URL}\ntoken: ${TOKEN}\nnode-ip: ${NODEIP}.$((220+i))"
     create_rke2_node "node${i}"
 done
