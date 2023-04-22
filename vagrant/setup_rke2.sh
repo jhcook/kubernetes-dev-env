@@ -34,6 +34,9 @@ shopt -s expand_aliases
 # Ignore user-defined signals
 trap - USR1 USR2
 
+# RKE2 installed kubectl on node
+RKE2KUBECTL="/var/lib/rancher/rke2/bin/kubectl --kubeconfig /etc/rancher/rke2/rke2.yaml"
+
 # Install RKE2 on a node
 # Requires: RKE2_VERSION set
 #           IRT set but defaults to null
@@ -51,7 +54,7 @@ create_rke2_node() {
         else
             echo "sudo /usr/local/bin/rke2-uninstall.sh" | ssh "${1}"
             # https://exploit.cz/solved-failed-to-configure-agent-node-password-rejected-duplicate-hostname-or-contents-rke2-k3s/
-            echo "/var/lib/rancher/rke2/bin/kubectl --kubeconfig /etc/rancher/rke2/rke2.yaml delete secret ${1}.node-password.rke2 -n kube-system" | ssh "${MASTERSRV}"
+            echo "${RKE2KUBECTL} delete secret ${1}.node-password.rke2 -n kube-system" | ssh "${MASTERSRV}" || /usr/bin/true
         fi
     fi
 
@@ -73,8 +76,7 @@ __EOF__
 wait_on_node() {
     echo -n "Confirming ${1} registration"
     cat - <<__EOF__ | ssh "${MASTERSRV}" >/dev/null 2>&1
-until /var/lib/rancher/rke2/bin/kubectl \
---kubeconfig /etc/rancher/rke2/rke2.yaml get node/${1}
+until ${RKE2KUBECTL} get node/${1}
 do
     echo -n .
     sleep 2
@@ -82,9 +84,7 @@ done
 __EOF__
     printf "\nWaiting for %s to become ready\n" "${1}"
     cat - <<__EOF__ | ssh "${MASTERSRV}"
-/var/lib/rancher/rke2/bin/kubectl \
---kubeconfig /etc/rancher/rke2/rke2.yaml wait --for=condition=Ready \
-node/${1} --timeout=900s
+${RKE2KUBECTL} wait --for=condition=Ready node/${1} --timeout=900s
 __EOF__
 }
 
@@ -95,7 +95,7 @@ cd "$(dirname "$0")"
 trap "cd ${OLDPWD}" EXIT
 
 # Install the primary master
-CONFIGYAML="token: ${TOKEN}\nwrite-kubeconfig-mode: 644\ntls-san: ${TLSSAN}\nnode-ip: ${NODEIP}.211"
+CONFIGYAML="token: ${TOKEN}\nwrite-kubeconfig-mode: 644\ntls-san: ${TLSSAN}\ndisable: rke2-ingress-nginx\nnode-ip: ${NODEIP}.211"
 create_rke2_node "${MASTERSRV}"
 
 # Create the URL to add hosts
