@@ -9,64 +9,49 @@ Vagrant.configure("2") do |config|
         v.cpus = 2
     end
     config.vm.provision:shell, inline: <<-SHELL
-        echo "root:vagrant" | sudo chpasswd
-        sudo sed -i '/^session    optional     pam_motd\.so/s/^/#/' /etc/pam.d/sshd
-        sudo sed -i 's/^#PrintLastLog yes$/PrintLastLog no/' /etc/ssh/sshd_config
-        sudo systemctl restart sshd
-        sudo timedatectl set-timezone Australia/Sydney
-        sudo echo -e "192.168.123.211\tmaster" >> /etc/hosts
-        sudo echo -e "192.168.123.212\tmaster2" >> /etc/hosts
-        sudo echo -e "192.168.123.213\tmaster3" >> /etc/hosts
-        sudo echo -e "192.168.123.221\tnode1" >> /etc/hosts
-        sudo echo -e "192.168.123.222\tnode2" >> /etc/hosts
-        sudo echo -e "192.168.123.223\tnode3" >> /etc/hosts
+        echo "root:vagrant" | chpasswd
+        sed -i '/^session    optional     pam_motd\.so/s/^/#/' /etc/pam.d/sshd
+        sed -i 's/^#PrintLastLog yes$/PrintLastLog no/' /etc/ssh/sshd_config
+        systemctl restart sshd
+        timedatectl set-timezone UTC
+        sed -i 's|^127\.0\.2\.1.*||' /etc/hosts
+        cat << __EOF__ >> /etc/hosts
+192.168.123.211\tmaster
+192.168.123.212\tmaster2
+192.168.123.213\tmaster3
+192.168.123.221\tnode1
+192.168.123.222\tnode2
+192.168.123.223\tnode3
+__EOF__
     SHELL
 
     config.vm.define "master" do |master|
         master.vm.hostname = "master"
         master.vm.network "private_network", ip: "192.168.123.211"
-        master.vm.provision:shell, inline: <<-SHELL
-            sudo sed -i 's/127\.0\.1\.1.*master//' /etc/hosts
-        SHELL
     end
 
     # config.vm.define "master2" do |master|
     #     master.vm.hostname = "master2"
     #     master.vm.network "private_network", ip: "192.168.123.212"
-    #     master.vm.provision:shell, inline: <<-SHELL
-    #         sudo sed -i 's/127\.0\.1\.1.*master2//' /etc/hosts
-    #     SHELL
     # end
 
     # config.vm.define "master3" do |master|
     #     master.vm.hostname = "master3"
     #     master.vm.network "private_network", ip: "192.168.123.213"
-    #     master.vm.provision:shell, inline: <<-SHELL
-    #         sudo sed -i 's/127\.0\.1\.1.*master3//' /etc/hosts
-    #     SHELL
     # end
 
     config.vm.define "node1" do |node1|
         node1.vm.hostname = "node1"
         node1.vm.network "private_network", ip: "192.168.123.221"
-        node1.vm.provision:shell, inline: <<-SHELL
-            sudo sed -i 's/127\.0\.1\.1.*node1//' /etc/hosts
-        SHELL
     end
 
     config.vm.define "node2" do |node2|
         node2.vm.hostname = "node2"
         node2.vm.network "private_network", ip: "192.168.123.222"
-        node2.vm.provision:shell, inline: <<-SHELL
-            sudo sed -i 's/127\.0\.1\.1.*node2//' /etc/hosts
-        SHELL
     end
 
-    config.vm.define "node3" do |node2|
-        node2.vm.hostname = "node3"
-        node2.vm.network "private_network", ip: "192.168.123.223"
-        node2.vm.provision:shell, inline: <<-SHELL
-            sudo sed -i 's/127\.0\.1\.1.*node3//' /etc/hosts
-        SHELL
+    config.vm.define "node3" do |node3|
+        node3.vm.hostname = "node3"
+        node3.vm.network "private_network", ip: "192.168.123.223"
     end
 end
