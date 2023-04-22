@@ -41,15 +41,17 @@ AGENT_NODE_COUNT=3
 #   nsswitch on each node.
 # * RKE2_VERSION
 #   This is the specific RKE2 release to deploy on each node.
-# * SRVRIP
-#   The primary master server's ip address to advertise within the
-#   cluster. This is critical in cases where nodes are multihomed.
+# * NODEIP
+#   The first three octets of the IP addresses used
 # * TLSSAN 
 #   A list of subject alternative names (hostnames or IPv4/IPv6 addrs)
 #   on the server's TLS cert.
+# * TOKEN a preshared secret used to join a server or agent to a cluster
+#   use echo `$RANDOM | md5sum | head -c32` to generate a random token
 
 MASTERSRV="master"
-RKE2_VERSION="v1.25.8+rke2r1"
-SRVRIP="192.168.123.210"
+RKE2_VERSION="v1.24.12+rke2r1"
+#RKE2_VERSION="v1.25.8+rke2r1"
+NODEIP="192.168.123"
 TLSSAN="rancher.test"
-TOKEN=""
+TOKEN="01010101010101010101010101010101"
