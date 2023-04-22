@@ -15,7 +15,8 @@ Vagrantfile that delivers four nodes: one master and three workers.
 Edit the `vagrant/localenv.sh` variables to create the nodes as to your
 preference. Ensure `env.sh` RUNTIME=vagrant.
 
-Create the Vagrant nodes, create an RKE2 cluster, and syncronise kubeconfig.
+Create the Vagrant nodes, install an RKE2 cluster, syncronise kubeconfig, and
+install NGINX ingress controller.
 
 ```
 $ bash vagrant/setup_vagrant.sh
@@ -24,7 +25,11 @@ $ bash vagrant/setup_rke2.sh
 ...
 $ bash vagrant/sync_kubeconfig.sh
 ...
+$ bash ingress/nginx/install_nginx_ingress.sh
+...
 ```
+
+Or, run `bash vagrant/quickstart.sh`.
 
 ## Operations
 
