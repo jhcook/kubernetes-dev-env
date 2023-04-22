@@ -35,6 +35,9 @@ set -o errexit
 # Clone the NGINX controller repository for CRDs and Helm deployments
 
 cd "${K8STMPDIR}"
+#shellcheck disable=SC2064
+trap "cd ${OLDPWD}" EXIT
+
 if [ -d "kubernetes-ingress" ]
 then
     cd kubernetes-ingress
@@ -45,7 +48,11 @@ else
 fi
 cd kubernetes-ingress/deployments/helm-chart
 
+#https://github.com/nginxinc/kubernetes-ingress/issues/3714
+#    --set controller.hostNetwork=true \ 
+# https://github.com/nginxinc/kubernetes-ingress/releases
 helm upgrade --install ingress-nginx . \
+    --set controller.installCRDs=true \
     --set nameOverride=ingress-nginx \
     --set rbac.create=true \
     --namespace ingress-nginx \
