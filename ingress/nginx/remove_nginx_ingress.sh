@@ -34,3 +34,4 @@ kubectl delete ns ingress-nginx
 kubectl delete clusterrole ingress-nginx
 kubectl delete clusterrolebinding ingress-nginx
 kubectl delete ingressclass nginx
+kubectl delete validatingwebhookconfiguration ingress-nginx-admission
