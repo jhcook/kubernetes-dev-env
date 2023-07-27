@@ -40,6 +40,7 @@ available with `brew`.
 * Virtualenv
 * yq
 * jq
+* sudo
 
 ```
 bash quickstart.sh

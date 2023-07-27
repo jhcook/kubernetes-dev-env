@@ -1,0 +1,72 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+
+# Use a vanilla RHEL9 box and disable SELinux for use with Minikube
+
+Vagrant.configure("2") do |config|
+
+    config.vm.box = "generic/fedora37"
+    config.vm.provider "hyperv" do |h|
+        h.maxmemory = 16384
+        h.memory = 6144
+        h.cpus = 2
+    end
+
+   # if Vagrant.has_plugin?("vagrant-registration")
+   #     config.registration.username = ENV['RHSM_USERNAME']
+   #     config.registration.password = ENV['RHSM_PASSWORD']
+   # end
+
+    config.vm.provision:shell, inline: <<-SHELL
+        echo "root:vagrant" | chpasswd
+        sed -i '/^session    optional     pam_motd\.so/s/^/#/' /etc/pam.d/sshd
+        sed -i 's/^#PrintLastLog yes$/PrintLastLog no/' /etc/ssh/sshd_config
+        systemctl restart sshd
+        timedatectl set-timezone UTC
+        sed -i 's|^127\.0\.2\.1.*||' /etc/hosts
+        if [ -f /etc/redhat-release ]; then
+        grubby --update-kernel ALL --args selinux=0
+        setenforce 0
+        systemctl disable --now firewalld
+        #yum install -y podman podman-docker container-tools
+        elif [ -f /etc/lsb-release ]; then
+        apt-get update
+        apt-get upgrade -y
+        apt-get install net-tools -y
+        fi
+        # All flavours
+        wget https://github.com/kubernetes-sigs/cri-tools/releases/download/v1.27.1/crictl-v1.27.1-linux-amd64.tar.gz
+        tar zxvf crictl-v1.27.1-linux-amd64.tar.gz -C /usr/local/bin
+        groupadd docker
+        usermod -aG docker vagrant
+        #newgrp docker
+        #systemctl start docker
+        #systemctl enable docker
+    SHELL
+
+    config.vm.provision "hosts", type: "shell", run: "never", path: "hyperv_hosts.sh"
+
+    config.vm.define "master" do |master|
+        master.vm.hostname = "master"
+    end
+
+    # config.vm.define "master2" do |master|
+    #     master.vm.hostname = "master2"
+    # end
+
+    # config.vm.define "master3" do |master|
+    #     master.vm.hostname = "master3"
+    # end
+
+    config.vm.define "node1" do |node1|
+        node1.vm.hostname = "node1"
+    end
+
+    config.vm.define "node2" do |node2|
+        node2.vm.hostname = "node2"
+    end
+
+    # config.vm.define "node3" do |node3|
+    #     node3.vm.hostname = "node3"
+    # end
+end

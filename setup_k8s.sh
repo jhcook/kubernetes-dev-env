@@ -37,6 +37,7 @@
 
 # shellcheck source=/dev/null
 . env.sh
+set -o errexit
 
 # The below options can be used with a docker provider such as lima/colima.
 #         --driver=docker \
@@ -55,15 +56,14 @@ minikube --addons=ingress,ingress-dns,metrics-server,registry \
          --insecure-registry="ghcr.io","registry.k8s.io","k8s.gcr.io","gcr.io" \
          start
 
-if [ ! -d "/etc/resolver" ]
-then
-  sudo mkdir /etc/resolver
-fi
-
 PLATFORM=$(uname)
 case ${PLATFORM} in
   Darwin)
     printf "Configuring macOS to forward .test to Minikube\n"
+    if [ ! -d "/etc/resolver" ]
+    then
+      sudo mkdir /etc/resolver
+    fi
     sudo bash -c "cat - > /etc/resolver/minikube-test <<EOF
 domain test
 nameserver $(minikube ip)
@@ -102,6 +102,13 @@ EOF
       printf "Unknown Linux resolver configuration\n" 1>&2
       printf "Please configure .test resolution to Minikube\n" 1>&2
     fi >/dev/null
+    ;;
+  MINGW64_NT-10.0-22621)
+    cat << __EOF__ > /etc/resolvconf/resolv.conf.d/base
+search test
+nameserver $(minikube ip)
+timeout 5
+__EOF__
     ;;
   *)
     printf "Unknown platform: %s" "${PLATFORM}\n" 1>&2

@@ -1,0 +1,15 @@
+#!/usr/bin/env bash
+#
+# This file is used as a Vagrant provisioner and is intended to be edited
+# programmatically for use by Vagrant direct.
+#
+# Author: Justin Cook
+
+cat << __EOF__ >> /etc/hosts
+master_IP\tmaster
+master2_IP\tmaster2
+master3_IP\tmaster3
+node1_IP\tnode1
+node2_IP\tnode2
+node3_IP\tnode3
+__EOF__
